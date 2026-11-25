@@ -1,0 +1,74 @@
+schema: spec-driven
+
+# Project context, shown to the AI when it creates artifacts.
+context: |
+  Product: RideOrNah, an iOS app that tells motorcycle riders whether today is a good
+  day to ride. It answers Ride, Maybe or Nah from weather limits each rider sets.
+
+  Business model: auto-renewable subscription with a free trial (StoreKit 2). Prices
+  live in App Store Connect, never in code.
+
+  Hard constraints (every change must respect these):
+  - No backend that we own or pay for. All logic, storage and purchase verification run
+    on the device. The only network destinations are Apple services: WeatherKit,
+    StoreKit/App Store, and the rider's own iCloud account.
+  - Collect no user data. No accounts, no analytics, crash-reporting or ad SDKs, no
+    third-party code that makes network calls. App Store privacy label target is
+    "Data Not Collected". Location is used only to request weather and never leaves the
+    device except as rounded coordinates sent to WeatherKit.
+  - Running costs may only grow with paying users. WeatherKit requests are cached and
+    budgeted (see the weather-data capability). Any feature that adds weather requests
+    must say how many.
+
+  Tech stack: Swift 6 language mode with complete strict concurrency, SwiftUI,
+  Observation, Swift Testing (XCTest only for UI tests). Apple frameworks: WeatherKit,
+  CoreLocation, UserNotifications, BackgroundTasks, EventKitUI, StoreKit 2, WidgetKit,
+  WatchConnectivity, iCloud key-value storage. No third-party runtime packages unless a
+  change's design justifies one. XcodeGen generates the Xcode project from project.yml.
+
+  Platforms: iOS 18.0+ and watchOS 11.0+. Liquid Glass is used on iOS 26+ through
+  availability checks, with a standard-material fallback on iOS 18-25. Both paths must
+  offer identical functionality.
+
+  Units follow the device region (imperial or metric) with a manual override. Logic works
+  in SI units internally and converts only for display.
+
+  Design: visual design comes from a separate design session in this project. Until it
+  lands, specs describe behavior and screen content only, never layout, color, type or
+  motion.
+
+  Glossary:
+  - Verdict: Ride, Maybe or Nah for a day or a ride window. Unknown when data is
+    missing. The app never shows Ride without fresh enough data.
+  - Hard limit: a threshold whose breach makes the verdict Nah. Soft limit: a breach
+    makes it Maybe.
+  - Ride window: a recurring time range the rider actually rides, such as weekdays
+    07:00-09:00.
+  - Ride radius: how far from the evaluation location the rider expects to go. Weather
+    is sampled across it and the worst sample drives the verdict.
+  - Sample point: one coordinate in the ride radius that weather is fetched for.
+  - Profile: a named set of limits and ride windows, usually one per bike or riding
+    style. Exactly one profile is active at a time.
+  - Evaluation location: the rider's current location or a saved location.
+  - Ride opportunity: a stretch of daylight hours that are Ride at every sample point,
+    long enough to be worth riding.
+
+  Change order for v1: bootstrap-app, ride-verdict-engine, weather-provider,
+  rider-preferences, today-and-outlook, daily-notification, subscription-paywall,
+  calendar-suggestions, widgets, watch-app.
+
+# Per-artifact rules
+rules:
+  proposal:
+    - State the privacy impact in Impact: new permissions, and any data that leaves the device.
+    - State the WeatherKit request impact in Impact, even when it is "none".
+  specs:
+    - Never specify layout, color, typography or animation. The design session owns those.
+    - Any requirement that consumes weather data must say what happens when that data is missing or stale.
+    - Write limits and distances with both imperial and metric values.
+  design:
+    - Keep business logic in the RideOrNahKit Swift package, free of UIKit and SwiftUI, so it can be tested with `swift test` on macOS.
+    - Give the WeatherKit request count for any decision that adds weather requests.
+  tasks:
+    - Logic tasks verify with Swift Testing in the RideOrNahKit package; UI tasks verify with a SwiftUI preview, a UI test, or a named simulator check.
+    - Anything that needs the Apple Developer Program (WeatherKit entitlement, StoreKit sandbox, App Groups on device) must be marked "(needs Developer Program)".

@@ -6,7 +6,7 @@ Riders gear up with their phone in a pocket and a watch on their wrist. A quick 
 
 ## What Changes
 
-- Add a watchOS 11+ companion app that shows today's verdict, ride windows, the main reasons, the clear directions, and a compact 7-day outlook.
+- Add a watchOS 26+ companion app that shows today's verdict, ride windows, the main reasons, the clear directions, and a compact 7-day outlook.
 - Add complications for the circular, rectangular, inline and corner watch-face families.
 - Have the iPhone send evaluated results (verdicts and reasons, not raw forecasts) to the watch whenever it re-evaluates. The watch makes no weather requests.
 - Show the age of the results on the watch. Older than 12 hours, it asks the rider to open the iPhone app instead of showing a verdict.
@@ -25,6 +25,6 @@ Riders gear up with their phone in a pocket and a watch on their wrist. A quick 
 ## Impact
 
 - New watchOS app and complication extension targets in `project.yml`, a WatchConnectivity sender on the iPhone, and a receiver and store on the watch.
-- Tooling: needs a watchOS 11+ simulator runtime. Only watchOS 10.x is installed today.
+- Tooling: needs a watchOS 26+ simulator runtime. Only watchOS 10.x is installed today.
 - Privacy: results go from the rider's iPhone to their own paired watch. Location names are hidden on complications while the wrist is down or the watch is locked.
 - WeatherKit requests: none. The watch reuses the iPhone's evaluations.

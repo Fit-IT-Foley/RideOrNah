@@ -25,10 +25,10 @@ context: |
   CoreLocation, UserNotifications, BackgroundTasks, EventKitUI, StoreKit 2, WidgetKit,
   WatchConnectivity, iCloud key-value storage. No third-party runtime packages unless a
   change's design justifies one. XcodeGen generates the Xcode project from project.yml.
+  CI: GitHub Actions runs the Makefile targets on GitHub-hosted macOS runners.
 
-  Platforms: iOS 18.0+ and watchOS 11.0+. Liquid Glass is used on iOS 26+ through
-  availability checks, with a standard-material fallback on iOS 18-25. Both paths must
-  offer identical functionality.
+  Platforms: iOS 26.0+ and watchOS 26.0+. Liquid Glass is used throughout, with no
+  pre-Liquid Glass fallback.
 
   Units follow the device region (imperial or metric) with a manual override. Logic works
   in SI units internally and converts only for display.
@@ -60,7 +60,7 @@ context: |
 # Per-artifact rules
 rules:
   proposal:
-    - State the privacy impact in Impact: new permissions, and any data that leaves the device.
+    - "State the privacy impact in Impact: new permissions, and any data that leaves the device."
     - State the WeatherKit request impact in Impact, even when it is "none".
   specs:
     - Never specify layout, color, typography or animation. The design session owns those.

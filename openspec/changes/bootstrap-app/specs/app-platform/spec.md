@@ -2,31 +2,27 @@
 
 ## Purpose
 
-Defines the platform baseline every RideOrNah feature inherits: supported OS versions, the on-device and no-data-collection guarantees, adaptive Liquid Glass appearance, and baseline accessibility.
+Defines the platform baseline every RideOrNah feature inherits: supported OS versions, the on-device and no-data-collection guarantees, Liquid Glass appearance, and baseline accessibility.
 
 ## ADDED Requirements
 
 ### Requirement: Supported platforms
-The app SHALL install and run on iPhone with iOS 18.0 or later. It SHALL NOT require any feature that is unavailable on iOS 18.0 to deliver its core functionality.
+The app SHALL install and run on iPhone with iOS 26.0 or later. It SHALL NOT require any feature that is unavailable on iOS 26.0 to deliver its core functionality.
 
 #### Scenario: Install on the oldest supported OS
-- **WHEN** the app is installed on an iPhone running iOS 18.0
-- **THEN** it launches and every feature available on newer iOS versions works, apart from appearance
+- **WHEN** the app is installed on an iPhone running iOS 26.0
+- **THEN** it launches and every feature works as it does on newer iOS versions
 
 #### Scenario: Unsupported OS
-- **WHEN** a user on iOS 17 views the app in the App Store
-- **THEN** the App Store reports the app as requiring iOS 18.0 or later
+- **WHEN** a user on iOS 18 views the app in the App Store
+- **THEN** the App Store reports the app as requiring iOS 26.0 or later
 
-### Requirement: Adaptive Liquid Glass appearance
-On iOS 26 or later, the app SHALL render its surfaces and system controls with Liquid Glass. On iOS 18 through 25, it SHALL render the same surfaces with standard system materials. Both paths SHALL offer identical content, controls and behavior.
+### Requirement: Liquid Glass appearance
+The app SHALL render its surfaces and system controls with Liquid Glass on every supported iOS version.
 
-#### Scenario: Modern OS
-- **WHEN** the app runs on iOS 26 or later
-- **THEN** adaptive surfaces use Liquid Glass
-
-#### Scenario: Older OS
-- **WHEN** the app runs on iOS 18 through 25
-- **THEN** the same surfaces use standard materials, and no control or content is missing
+#### Scenario: Any supported OS
+- **WHEN** the app runs on any supported iOS version
+- **THEN** its surfaces and system controls use Liquid Glass
 
 ### Requirement: No backend and no data collection
 The app SHALL work without any server operated by the developer. It SHALL NOT create user accounts, and SHALL NOT include analytics, advertising, attribution or crash-reporting code. Its only network destinations SHALL be Apple services (WeatherKit, the App Store and StoreKit, and the user's own iCloud).

@@ -1,0 +1,116 @@
+# Builds and tests RideOrNah on GitHub-hosted macOS runners with the same make targets as
+# local work. Pushes to main and pull requests run the checks; pull requests and manual runs
+# run the UI tests. Start a manual run on a chosen simulator with:
+#   gh workflow run ci.yml -f device="iPhone 17 Pro" -f ios=27.2
+# Leave out -f ios to run the newest iOS 26 and iOS 27 simulators.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: Simulator device name
+        type: string
+        default: iPhone 17
+      ios:
+        description: iOS version, major ("26") or exact ("26.5"). Empty runs the newest iOS 26 and iOS 27.
+        type: string
+        default: ""
+
+# The repository is private, so macOS minutes are limited. A newer run replaces an older one
+# for the same branch and inputs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.device }}-${{ inputs.ios }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+jobs:
+  checks:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - run: make audit
+      - run: make test-kit
+      - run: make build
+
+  plan:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - id: plan
+        env:
+          DEVICE: ${{ inputs.device || 'iPhone 17' }}
+          IOS: ${{ inputs.ios }}
+        run: |
+          # iOS 26.x simulators are on macos-26 and iOS 27.x on xcode-27. Any other version
+          # goes to xcode-27, where finding the simulator fails and lists what's installed.
+          entry() {
+            case $1 in 26|26.*) runner=macos-26 ;; *) runner=xcode-27 ;; esac
+            jq -nc --arg runner "$runner" --arg ios "$1" --arg device "$DEVICE" '$ARGS.named'
+          }
+          if [ -z "$IOS" ]; then
+            include="[$(entry 26),$(entry 27)]"
+          else
+            include="[$(entry "$IOS")]"
+          fi
+          echo "matrix={\"include\":$include}" >> "$GITHUB_OUTPUT"
+
+  ui-tests:
+    needs: plan
+    name: UI tests (${{ matrix.device }}, iOS ${{ matrix.ios }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select the newest Xcode
+        # The newest release Xcode on the image runs every simulator runtime installed there.
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9.]+\.app$' | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+      - name: Find the simulator
+        id: simulator
+        env:
+          DEVICE: ${{ matrix.device }}
+          IOS: ${{ matrix.ios }}
+        run: |
+          destination=$(scripts/find-simulator.sh "$DEVICE" "$IOS")
+          echo "destination=$destination" >> "$GITHUB_OUTPUT"
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Run the UI tests
+        env:
+          DESTINATION: ${{ steps.simulator.outputs.destination }}
+        run: make test DESTINATION="$DESTINATION"
+      - name: Export screenshots
+        if: always()
+        run: |
+          [ -d build/UITests.xcresult ] || exit 0
+          xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ matrix.device }}-iOS-${{ matrix.ios }}
+          path: build/screenshots
+          retention-days: 7
+          if-no-files-found: ignore

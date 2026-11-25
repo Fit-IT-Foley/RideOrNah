@@ -1,0 +1,65 @@
+# Source of truth for the Xcode project. Run `make project` to regenerate RideOrNah.xcodeproj.
+name: RideOrNah
+
+options:
+  createIntermediateGroups: true
+
+packages:
+  RideOrNahKit:
+    path: Packages/RideOrNahKit
+
+targets:
+  RideOrNah:
+    type: application
+    platform: iOS
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: RideOrNah
+    dependencies:
+      - package: RideOrNahKit
+        product: SharedContainer
+    entitlements:
+      path: RideOrNah/RideOrNah.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
+    info:
+      path: RideOrNah/Info.plist
+      properties:
+        CFBundleDisplayName: RideOrNah
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+
+  RideOrNahUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: RideOrNahUITests
+    dependencies:
+      - target: RideOrNah
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.uitests
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  RideOrNah:
+    build:
+      targets:
+        RideOrNah: all
+    test:
+      targets:
+        - RideOrNahUITests

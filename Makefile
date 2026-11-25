@@ -1,0 +1,59 @@
+# Command surface for building and testing RideOrNah. Agents, humans and CI use these targets
+# instead of raw xcodebuild invocations.
+
+PROJECT := RideOrNah.xcodeproj
+SCHEME := RideOrNah
+KIT := Packages/RideOrNahKit
+CONFIGURATION ?= Debug
+
+# `make test` runs the UI tests on the oldest supported iOS and the newest. Override with
+# SIM_OLDEST=... SIM_LATEST=... if needed, or set DESTINATION to run on one simulator only:
+#   make test DESTINATION="$(scripts/find-simulator.sh 'iPhone 17' 26)"
+# The defaults are looked up by ID when the tests run: a destination given only by name means
+# the latest OS to xcodebuild, so it would skip the iOS 26 simulator.
+SIM_OLDEST ?= $$(scripts/find-simulator.sh 'RideOrNah iOS 26' 26)
+SIM_LATEST ?= $$(scripts/find-simulator.sh 'RideOrNah iOS 27' 27)
+DESTINATION ?=
+RESULT_BUNDLE ?= build/UITests.xcresult
+
+ifeq ($(DESTINATION),)
+TEST_SETUP := simulators
+TEST_DESTINATIONS := -destination "$(SIM_OLDEST)" -destination "$(SIM_LATEST)"
+else
+TEST_SETUP :=
+TEST_DESTINATIONS := -destination "$(DESTINATION)"
+endif
+
+.PHONY: help project simulators build test test-kit audit
+
+help:
+	@echo "make project     Generate $(PROJECT) from project.yml"
+	@echo "make simulators  Create the RideOrNah iOS 26 and iOS 27 simulators if missing"
+	@echo "make build       Build the app for the iOS Simulator (CONFIGURATION=$(CONFIGURATION))"
+	@echo "make test        Run UI tests on the iOS 26 and iOS 27 simulators, or on DESTINATION"
+	@echo "make test-kit    Run RideOrNahKit's Swift tests on this Mac"
+	@echo "make audit       Fail if any remote package dependency is present"
+
+project:
+	@command -v xcodegen >/dev/null 2>&1 || { \
+		echo "error: XcodeGen is not installed. Install it with: brew install xcodegen" >&2; \
+		exit 1; }
+	@xcodegen generate --quiet
+
+simulators:
+	@scripts/create-simulators.sh
+
+build: project
+	xcodebuild build -quiet -project $(PROJECT) -scheme $(SCHEME) \
+		-configuration $(CONFIGURATION) -destination 'generic/platform=iOS Simulator'
+
+test: project $(TEST_SETUP)
+	@rm -rf $(RESULT_BUNDLE)
+	xcodebuild test -quiet -project $(PROJECT) -scheme $(SCHEME) \
+		$(TEST_DESTINATIONS) -resultBundlePath $(RESULT_BUNDLE)
+
+test-kit:
+	swift test --package-path $(KIT)
+
+audit:
+	@scripts/audit-dependencies.sh

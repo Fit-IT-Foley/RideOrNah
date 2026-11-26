@@ -7,10 +7,13 @@ let package = Package(
     name: "RideOrNahKit",
     platforms: [.iOS(.v26), .watchOS(.v26), .macOS(.v26)],
     products: [
-        .library(name: "SharedContainer", targets: ["SharedContainer"])
+        .library(name: "SharedContainer", targets: ["SharedContainer"]),
+        .library(name: "VerdictEngine", targets: ["VerdictEngine"]),
     ],
     targets: [
         .target(name: "SharedContainer"),
         .testTarget(name: "SharedContainerTests", dependencies: ["SharedContainer"]),
+        .target(name: "VerdictEngine"),
+        .testTarget(name: "VerdictEngineTests", dependencies: ["VerdictEngine"]),
     ]
 )

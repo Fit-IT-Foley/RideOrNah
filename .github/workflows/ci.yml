@@ -114,6 +114,10 @@ jobs:
       - name: Run the UI tests
         env:
           DESTINATION: ${{ steps.simulator.outputs.destination }}
+          # xcodebuild passes TEST_RUNNER_-prefixed variables to the tests without the prefix, so
+          # tests see CI=true. Hosted simulators ignore device appearance changes, and the live
+          # dark-mode UI test skips on it.
+          TEST_RUNNER_CI: "true"
         run: make test DESTINATION="$DESTINATION"
       - name: Export screenshots
         if: always()

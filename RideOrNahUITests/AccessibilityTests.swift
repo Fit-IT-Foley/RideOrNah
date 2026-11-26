@@ -22,9 +22,14 @@ final class AccessibilityTests: XCTestCase {
         add(screenshot)
     }
 
+    // Hosted CI simulators ignore device appearance changes (the screen never leaves light mode),
+    // so CI sets CI=true and skips this; RideOrNahTests' AppearanceTests covers the scenario there.
     // Scenario: app-platform: Switching appearance
     @MainActor
     func testSwitchingToDarkModeWhileOpenRedraws() throws {
+        try XCTSkipIf(
+            ProcessInfo.processInfo.environment["CI"] == "true",
+            "CI simulators ignore device appearance changes; AppearanceTests covers this scenario")
         XCUIDevice.shared.appearance = .light
         defer { XCUIDevice.shared.appearance = .light }
 

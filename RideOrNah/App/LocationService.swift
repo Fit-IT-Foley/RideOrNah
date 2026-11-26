@@ -109,8 +109,11 @@ struct MapPlaceSearch: PlaceSearching {
     /// For UI tests: answers the permission prompt without the system dialog.
     final class StubLocationService: LocationProviding {
         let grants: Bool
-        private(set) var authorization: LocationAuthorization = .notDetermined
-        init(grants: Bool) { self.grants = grants }
+        private(set) var authorization: LocationAuthorization
+        init(grants: Bool) {
+            self.grants = grants
+            authorization = grants ? .granted : .notDetermined
+        }
         func requestPermission() async -> Bool {
             authorization = grants ? .granted : .denied
             return grants

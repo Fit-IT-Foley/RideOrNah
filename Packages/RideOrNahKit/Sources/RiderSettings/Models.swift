@@ -102,6 +102,11 @@ public enum BackgroundSource: Sendable, Codable, Hashable {
 public struct ResolvedLocation: Sendable, Equatable {
     public var name: String
     public var coordinate: GeoCoordinate
+
+    public init(name: String, coordinate: GeoCoordinate) {
+        self.name = name
+        self.coordinate = coordinate
+    }
 }
 
 /// Today's radius override, valid only on the local day it was set.

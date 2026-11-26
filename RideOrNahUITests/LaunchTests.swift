@@ -6,12 +6,15 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testLaunchShowsPlaceholderTitle() {
         let app = XCUIApplication()
-        app.launchArguments += ["-skipFirstRun", "YES"]
+        app.launchArguments += [
+            "-skipFirstRun", "YES", "-locationStub", "granted", "-weatherSource", "fixture", "-weatherScenario",
+            "afternoonRain", "-fixedNow", "2026-06-08T06:00",
+        ]
         app.launch()
 
-        let title = app.staticTexts["root.title"]
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        XCTAssertEqual(title.label, "RideOrNah")
+        let verdict = app.descendants(matching: .any)["today.word"]
+        XCTAssertTrue(verdict.waitForExistence(timeout: 15))
+        XCTAssertEqual(verdict.label, "Nah")
 
         // Kept even when the test passes, so CI can publish what each simulator showed.
         let screenshot = XCTAttachment(screenshot: app.screenshot())

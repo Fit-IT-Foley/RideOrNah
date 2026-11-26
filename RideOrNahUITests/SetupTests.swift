@@ -29,9 +29,9 @@ final class SetupTests: XCTestCase {
         app.buttons["firstRun.style.commute"].tap()
         app.buttons["firstRun.limits.confirm"].tap()
         app.buttons["firstRun.location.allow"].tap()
-        let profile = app.staticTexts["root.profile"]
+        let profile = app.buttons["today.profileChip"]
         XCTAssertTrue(profile.waitForExistence(timeout: 10))
-        XCTAssertEqual(profile.label, "Riding with My Bike")
+        XCTAssertEqual(profile.label, "Profile: My Bike. Change profile")
     }
 
     // Scenario: rider-profiles: Soft beyond hard

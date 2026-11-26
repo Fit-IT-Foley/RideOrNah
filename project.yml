@@ -26,6 +26,8 @@ targets:
         product: WeatherData
       - package: RideOrNahKit
         product: RiderSettings
+      - package: RideOrNahKit
+        product: Presentation
     entitlements:
       path: RideOrNah/RideOrNah.entitlements
       properties:

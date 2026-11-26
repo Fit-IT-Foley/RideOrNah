@@ -1,6 +1,7 @@
-# Builds and tests RideOrNah on GitHub-hosted macOS runners with the same make targets as
-# local work. Pushes to main and pull requests run the checks; pull requests and manual runs
-# run the UI tests. Start a manual run on a chosen simulator with:
+# Builds and tests RideOrNah on GitHub-hosted runners with the same make targets as local
+# work. Pushes to main and pull requests run the checks and spec validation; pull requests and
+# manual runs run the UI tests. Job names are what scripts/merge-when-green.sh waits for, so
+# rename a job there too. Start a manual run on a chosen simulator with:
 #   gh workflow run ci.yml -f device="iPhone 17 Pro" -f ios=27.2
 # Leave out -f ios to run the newest iOS 26 and iOS 27 simulators.
 name: CI
@@ -43,8 +44,19 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
       - run: make audit
+      - run: make lint
       - run: make test-kit
       - run: make build
+
+  # Needs no Mac, so it runs on Linux and costs no macOS minutes.
+  specs:
+    name: Spec validation
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: make validate-specs
 
   plan:
     if: github.event_name != 'push'

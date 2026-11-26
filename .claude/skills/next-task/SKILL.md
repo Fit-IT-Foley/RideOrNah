@@ -78,10 +78,11 @@ Write commit messages like the repository's history: one imperative sentence, no
 - With `xcodebuild` on PATH (the owner's Mac), run `make audit`, `make lint`, `make test-kit` and `make build`, plus `make test` when UI changed. All must pass before you go on.
 - Without it (a Linux sandbox), you can't build or run the tests here. CI is the test, in step 7.
 - `make validate-specs` (`openspec validate --all --strict`) must pass. CI runs it too.
+- `make spec-coverage CHANGE=<change>` must pass: every scenario in the change has a test linked with `// Scenario: <capability>: <scenario name>`, or an entry in `docs/manual-checks.md` when no Mac or simulator can check it.
 
 ## 6. Archive and open the pull request
 
-If every task in the change is ticked, archive it by following `.claude/skills/openspec-archive-change/SKILL.md`, which merges its delta specs into `openspec/specs/`. Validate again. If tasks remain unticked (Developer Program, or partial work the item asked for), don't archive. Say why in the pull request; the change stays active until they're done.
+If every task in the change is ticked, archive it by following `.claude/skills/openspec-archive-change/SKILL.md`, which merges its delta specs into `openspec/specs/`. Validate again, and run `make spec-coverage`, which CI also runs. If tasks remain unticked (Developer Program, or partial work the item asked for), don't archive. Say why in the pull request; the change stays active until they're done.
 
 Push the branch and open a pull request whose title is the one-sentence summary (it becomes the squash commit on main):
 

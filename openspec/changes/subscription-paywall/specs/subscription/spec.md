@@ -18,7 +18,7 @@ The system SHALL offer a monthly and an annual auto-renewable subscription in a 
 - **THEN** the paywall offers the plans without a trial and doesn't mention one
 
 ### Requirement: Paywall content
-The paywall SHALL show, for each plan: the price per period, the trial length and what's charged when it ends (if a trial is offered), and that the subscription renews automatically until cancelled. It SHALL show a short list of what's included, a Restore Purchases action, and working links to the Terms of Use and the Privacy Policy.
+The paywall SHALL show, for each plan: the price per period, the trial length and what's charged when it ends (if a trial is offered), and that the subscription renews automatically until cancelled. It SHALL show a short list of what's included, a Restore Purchases action, and working links to the Terms of Use and the Privacy Policy that open in Safari, outside the app.
 
 #### Scenario: Required disclosures
 - **WHEN** the paywall is shown to a trial-eligible rider
@@ -65,8 +65,8 @@ While running, the system SHALL react to purchases, renewals, expirations, refun
 - **THEN** access ends and gated content locks without a relaunch
 
 #### Scenario: Purchase on another device
-- **WHEN** the rider subscribes on their iPad
-- **THEN** access is granted on their iPhone the next time StoreKit delivers the update
+- **WHEN** StoreKit delivers a new verified transaction for a plan while the app is running, as it does after a purchase on another device signed in to the same Apple Account
+- **THEN** access is granted without a relaunch
 
 ### Requirement: Effects of losing access
 When access ends, the system SHALL remove all pending ride notifications, show widgets and the watch app in a locked state with no weather information, stop making weather requests, and keep every profile and setting. When access returns, notifications, widgets and the watch SHALL resume without the rider reconfiguring anything.

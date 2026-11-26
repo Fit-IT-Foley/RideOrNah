@@ -1,6 +1,8 @@
 import XCTest
 
 final class LaunchTests: XCTestCase {
+    // `make test` runs this on the oldest supported iOS (26) and the newest.
+    // Scenario: app-platform: Install on the oldest supported OS
     @MainActor
     func testLaunchShowsPlaceholderTitle() {
         let app = XCUIApplication()

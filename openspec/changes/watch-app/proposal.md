@@ -25,6 +25,7 @@ Riders gear up with their phone in a pocket and a watch on their wrist. A quick 
 ## Impact
 
 - New watchOS app and complication extension targets in `project.yml`, a WatchConnectivity sender on the iPhone, and a receiver and store on the watch.
-- Tooling: needs a watchOS 26+ simulator runtime. Only watchOS 10.x is installed today.
+- Tooling: needs a watchOS 26+ simulator runtime. Only watchOS 10.x is installed today. `make test`, `scripts/create-simulators.sh` and CI's pull-request UI test matrix only run iOS today, so this change adds a watchOS 26 destination to each, and to `scripts/merge-when-green.sh`'s expected checks. That costs extra macOS CI minutes on every pull request.
+- Watch scenarios are tested in two halves: the iPhone's sender with a fake session, and the watch app with injected results. Real delivery between paired devices goes in `docs/manual-checks.md`.
 - Privacy: results go from the rider's iPhone to their own paired watch. Location names are hidden on complications while the wrist is down or the watch is locked.
 - WeatherKit requests: none. The watch reuses the iPhone's evaluations.

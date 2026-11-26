@@ -48,7 +48,8 @@ jobs:
       - run: make test-kit
       - run: make build
 
-  # Needs no Mac, so it runs on Linux and costs no macOS minutes.
+  # Needs no Mac, so it runs on Linux and costs no macOS minutes. Checks the specs are valid and
+  # that every scenario links to a test or a manual check.
   specs:
     name: Spec validation
     if: github.event_name != 'workflow_dispatch'
@@ -57,6 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make validate-specs
+      - run: make spec-coverage
 
   plan:
     if: github.event_name != 'push'
@@ -112,6 +114,10 @@ jobs:
       - name: Run the UI tests
         env:
           DESTINATION: ${{ steps.simulator.outputs.destination }}
+          # xcodebuild passes TEST_RUNNER_-prefixed variables to the tests without the prefix, so
+          # tests see CI=true. Hosted simulators ignore device appearance changes, and the live
+          # dark-mode UI test skips on it.
+          TEST_RUNNER_CI: "true"
         run: make test DESTINATION="$DESTINATION"
       - name: Export screenshots
         if: always()

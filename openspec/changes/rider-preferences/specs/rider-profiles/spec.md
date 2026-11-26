@@ -22,7 +22,7 @@ The system SHALL let the rider create, rename, duplicate and delete profiles. Ex
 - **THEN** the most recently used remaining profile becomes active
 
 ### Requirement: Default limits for new profiles
-A newly created profile SHALL start with these limits. A value at the limit counts as a breach.
+A newly created profile SHALL start with these limits. A value at the limit counts as a breach. Limits are stored in SI units (the metric values below). The imperial values are those limits rounded for display.
 
 | Factor | Direction | Soft limit | Hard limit | Enabled |
 |---|---|---|---|---|
@@ -35,9 +35,9 @@ A newly created profile SHALL start with these limits. A value at the limit coun
 | Gusts | at or above | 30 mph (48 km/h) | 40 mph (64 km/h) | yes |
 | UV index | at or above | 8 | none | yes |
 | Wet roads | duration after rain | 2 hours, soft | none | yes |
-| Ice risk | at or below | none | 37 °F (3 °C) | yes |
+| Ice risk | at or below the ice threshold | always hard | threshold 37 °F (3 °C) | yes |
 | Visibility | at or below | 1 mi (1.6 km) | 0.25 mi (400 m) | yes |
-| Severe weather alerts | severity | moderate | severe or extreme | yes |
+| Severe weather alerts | alert severity | moderate (fixed) | severe or extreme (fixed) | yes |
 
 New profiles SHALL also default to a minimum ride duration of 2 hours and a ride radius of 25 mi (40 km).
 
@@ -50,7 +50,7 @@ New profiles SHALL also default to a minimum ride duration of 2 hours and a ride
 - **THEN** that profile's limits return to the table values, and its name, windows and radius are unchanged
 
 ### Requirement: Editing limits
-For each factor, the rider SHALL be able to turn the factor on or off and set or clear its soft and hard limits, in their display units. The system SHALL reject a soft limit that is more severe than the hard limit, explaining why, and SHALL reject values outside the physical range for the factor. Wet-road duration SHALL be adjustable from 0 to 12 hours, and minimum ride duration from 30 minutes to 8 hours.
+For each factor, the rider SHALL be able to turn the factor on or off and set or clear its soft and hard limits, in their display units. Ice risk and severe weather alerts SHALL offer only on or off, plus the ice threshold, because the verdict rules fix their severities. The system SHALL reject a soft limit that is more severe than the hard limit, explaining why, and SHALL reject values outside the physical range for the factor. Wet-road duration SHALL be adjustable from 0 to 12 hours, and minimum ride duration from 30 minutes to 8 hours.
 
 #### Scenario: Soft beyond hard
 - **WHEN** the rider sets the soft gust limit to 45 mph (72 km/h) while the hard gust limit is 40 mph (64 km/h)
@@ -79,7 +79,7 @@ The system SHALL display temperatures, speeds, distances, visibility and precipi
 - **THEN** a 30 mph gust limit is shown as 48 km/h, and verdicts are unchanged
 
 ### Requirement: First-run setup
-On first launch, the system SHALL guide the rider through: choosing a riding-style preset; optionally reviewing the main limits (precipitation chance, cold, heat, wind and gusts), with an option to keep the defaults; and setting up a location (see `ride-locations`). Completing setup SHALL create an active profile named "My Bike", which the rider can rename. Quitting mid-setup SHALL resume setup at the same step on next launch.
+On first launch, the system SHALL guide the rider through: choosing a riding-style preset; optionally reviewing the main limits (precipitation chance, cold, heat, wind and gusts), with an option to keep the defaults; and setting up a location (see `ride-locations`). Later capabilities MAY add steps after the location step (`ride-notifications` adds one). Completing setup SHALL create an active profile named "My Bike", which the rider can rename. Quitting mid-setup SHALL resume setup at the same step on next launch.
 
 #### Scenario: Quick setup
 - **WHEN** a new rider picks Commute and keeps the defaults
@@ -93,8 +93,8 @@ On first launch, the system SHALL guide the rider through: choosing a riding-sty
 When the rider is signed in to iCloud and sync is on (the default), the system SHALL sync profiles, the active-profile choice, saved locations, the background location source, units and notification settings across the rider's devices through their private iCloud storage. When two devices change the same profile, the most recent change SHALL win for that profile. With sync off or no iCloud account, preferences SHALL stay on the device with no loss of function. The last-seen location, forecast cache and request budget SHALL NEVER sync.
 
 #### Scenario: New iPhone
-- **WHEN** the rider installs the app on a second iPhone signed in to the same iCloud account
-- **THEN** their profiles and saved locations appear without running setup again
+- **WHEN** the app launches for the first time and the rider's iCloud storage already holds profiles and saved locations from another device
+- **THEN** those profiles and saved locations load, and first-run setup is skipped
 
 #### Scenario: No iCloud
 - **WHEN** the device has no iCloud account
@@ -108,5 +108,5 @@ When the rider is signed in to iCloud and sync is on (the default), the system S
 Profiles and settings SHALL survive app relaunches, device restarts and app updates.
 
 #### Scenario: App update
-- **WHEN** the app updates to a new version
+- **WHEN** preferences saved by the previous app version are loaded by the new version
 - **THEN** every profile, limit, window and setting is unchanged

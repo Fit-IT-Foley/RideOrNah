@@ -39,6 +39,23 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
 
+  # Unit tests hosted in the app, for checks that need the built app bundle.
+  RideOrNahTests:
+    type: bundle.unit-test
+    platform: iOS
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: RideOrNahTests
+    dependencies:
+      - target: RideOrNah
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.tests
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+
   RideOrNahUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -62,4 +79,5 @@ schemes:
         RideOrNah: all
     test:
       targets:
+        - RideOrNahTests
         - RideOrNahUITests

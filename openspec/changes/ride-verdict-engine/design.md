@@ -31,7 +31,7 @@
 ### Aggregation pipeline
 1. Choose evaluated hours per day: ride windows overlapping hours, or the daylight fallback. Drop ended windows today.
 2. Run every enabled evaluator for every evaluated hour at every sample point, producing findings.
-3. Window verdict = the max severity of its findings, or Unknown if the center sample has no hours in the window.
+3. Window verdict = the max severity of its findings, or Unknown if the center sample has no data, or is missing a core value (precipitation chance, temperature, feels-like or sustained wind), for any hour in the window.
 4. Day verdict = the max of its window verdicts, with Unknown losing to Nah and beating Ride and Maybe, per the spec.
 5. Merge findings into `Breach`es keyed by (factor, severity, position group) over consecutive hours, keeping the worst value.
 6. Direction summary = the max severity per `CompassDirection`, across inner and outer ring points.
@@ -41,7 +41,10 @@
 Today: stale after 3 hours, expired after 12. Later days: expired after 24. These live in `FreshnessPolicy` with the spec values as defaults, so notification copy and tests can reference them by name.
 
 ### Opportunities from a per-hour "all clear" mask
-For each day, build a boolean per daylight hour that's true when no sample has any finding. Then take maximal runs of at least the minimum duration, excluding past hours, and keep the three longest. This reuses step 2's findings, so it's cheap.
+For each day, build a boolean per daylight hour that's true only when every sample point has data for that hour (no missing core values) and no sample has any finding. An hour with no data has no findings, so the data check is what stops a gap from counting as clear. Skip the day entirely when its verdict is Unknown or coverage is partial. Then take maximal runs of at least the minimum duration, excluding ended hours, and keep the three longest. This reuses step 2's findings, so it's cheap.
+
+### Time ranges reuse the window pipeline
+Evaluating an arbitrary range (an added calendar ride) builds a one-off window from the range and runs steps 2 to 7 on it. Ranges and ride windows therefore can't disagree about the same hours.
 
 ### Time zone handling
 Windows are wall-clock times (`weekday`, start and end minutes after midnight, with no window crossing midnight), resolved against the injected `Calendar`. Tests inject fixed time zones, including a DST-transition day, so time-zone behavior is covered.

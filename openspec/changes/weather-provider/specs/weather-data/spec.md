@@ -7,7 +7,7 @@ Defines how RideOrNah samples, fetches, caches and budgets weather forecasts acr
 ## ADDED Requirements
 
 ### Requirement: Sample point layout
-The system SHALL choose sample points from the evaluation location and ride radius. A local radius SHALL use only the evaluation location. A radius under 80 km (49.7 mi) SHALL use the evaluation location plus one point in each of the eight compass directions (N, NE, E, SE, S, SW, W, NW) at the full radius. A radius of 80 km (49.7 mi) or more SHALL also add eight points at half the radius. The threshold is set in kilometers, so the 50 mi and 80 km radius presets both get the inner ring.
+The system SHALL choose sample points from the evaluation location and ride radius. A local radius SHALL use only the evaluation location. A radius under 80 km (49.7 mi) SHALL use the evaluation location plus one point in each of the eight compass directions (N, NE, E, SE, S, SW, W, NW) at the full radius. A radius of 80 km (49.7 mi) or more SHALL also add eight points at half the radius. The 50 mi (80 km) radius preset is stored as exactly 80 km, so it gets the inner ring.
 
 #### Scenario: Default radius
 - **WHEN** the ride radius is 25 mi (40 km)
@@ -48,7 +48,7 @@ The system SHALL reuse a cached forecast for a sample point instead of requestin
 
 #### Scenario: Pull to refresh too soon
 - **WHEN** the rider requests a refresh 10 minutes after the last fetch
-- **THEN** no request is made, and the rider is told the forecast is already up to date
+- **THEN** no request is made, and the result reports the forecast as already current
 
 #### Scenario: Widget refresh
 - **WHEN** a widget needs data 90 minutes after the last fetch
@@ -95,7 +95,7 @@ The system SHALL report the outcome of every forecast request set as one of: com
 - **THEN** the outcome is partial, naming SW and W, and the successful samples are returned
 
 ### Requirement: Weather attribution
-Every app screen that presents weather-derived information, including verdicts, SHALL show the Apple Weather mark matching the current light or dark appearance, and a link to Apple's weather data attribution page. Widgets and the watch app SHALL show attribution wherever Apple's WeatherKit guidelines require it.
+Every app screen that presents weather-derived information, including verdicts, SHALL show the Apple Weather mark matching the current light or dark appearance, and a link to Apple's weather data attribution page. The `widgets` and `watch-app` capabilities define attribution for their own surfaces.
 
 #### Scenario: Verdict screen
 - **WHEN** a screen shows a verdict or any forecast value
@@ -109,5 +109,5 @@ Debug builds SHALL offer a fixture weather source with named scenarios (at least
 - **THEN** forecasts come from the fixture, no network request is made, and the north sample points show thunderstorms
 
 #### Scenario: Release build
-- **WHEN** a release build runs
-- **THEN** the fixture source can't be selected
+- **WHEN** a Release build is launched with the fixture launch arguments
+- **THEN** the arguments are ignored, no fixture data is shown, and the debug weather screen doesn't exist

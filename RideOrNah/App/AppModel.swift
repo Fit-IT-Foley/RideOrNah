@@ -9,6 +9,8 @@ import SharedContainer
 final class AppModel {
     private(set) var preferences: Preferences?
     private(set) var firstRun: FirstRunFlow?
+    /// The tab on screen; a notification tap switches to Today.
+    var selectedTab = AppTab.today
     let store: PreferencesStore
     let location: any LocationProviding
     let placeSearch: any PlaceSearching
@@ -54,6 +56,7 @@ final class AppModel {
                 $0.choose(.commute)
                 $0.confirmLimits()
                 $0.locationPermission(granted: true)
+                $0.skipNotifications()
             }
         }
 

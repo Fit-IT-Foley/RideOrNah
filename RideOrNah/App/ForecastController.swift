@@ -130,7 +130,31 @@ final class ForecastController {
         if snapshot.outcome == .alreadyCurrent { message = "Already up to date" }
         self.snapshot = snapshot
         evaluate()
+        if purpose != .background { await onRefreshed?() }
         if isLive, attribution == .fixture, let live = try? await WeatherAttributionInfo.live() { attribution = live }
+    }
+
+    /// Called after each foreground or manual refresh, so notifications can be rebuilt.
+    var onRefreshed: (() async -> Void)?
+
+    /// The outlook at the background location source (for notifications), with today's radius,
+    /// from cache where possible. Nil when there's no background place.
+    func backgroundEvaluation() async -> (outlook: [DayEvaluation]?, fetchedAt: Date?)? {
+        guard let preferences = app.preferences,
+            let place = preferences.backgroundPlace(lastSeen: app.store.lastSeenLocation)
+        else { return nil }
+        let now = clock()
+        let store = ForecastStore(
+            provider: provider(center: place.coordinate), cache: cache, budget: isLive ? budget : nil,
+            calendar: calendar, clock: clock)
+        let snapshot = await store.snapshot(
+            center: place.coordinate, radius: preferences.radius(on: now, calendar: calendar).metres,
+            purpose: .background)
+        let outlook = snapshot.evaluationInput(
+            profile: preferences.activeProfile.snapshot, now: now, calendar: calendar
+        )
+        .map(VerdictEngine.outlook(for:))
+        return (outlook, snapshot.fetchedAt)
     }
 
     /// Re-evaluates the snapshot already in hand, for profile changes that need no new data.

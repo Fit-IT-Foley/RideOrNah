@@ -165,6 +165,8 @@ public struct Preferences: Sendable, Codable, Equatable {
     public var sharedModifiedAt: Date
     /// Deleted profiles and when, so another device's copy doesn't bring them back.
     public var deletedProfiles: [UUID: Date]
+    /// The daily ride notification. Added after version 1, so older saves load with the default.
+    public var notifications: NotificationSettings
 
     public init(firstProfile: RiderProfile, now: Date = Date()) {
         schemaVersion = Self.schemaVersion
@@ -179,5 +181,64 @@ public struct Preferences: Sendable, Codable, Equatable {
         todayRadius = nil
         sharedModifiedAt = now
         deletedProfiles = [:]
+        notifications = NotificationSettings()
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case schemaVersion, profiles, activeProfileID, recentProfileIDs, savedLocations, evaluationLocation
+        case backgroundSource, unitPreference, syncEnabled, todayRadius, sharedModifiedAt, deletedProfiles
+        case notifications
+    }
+
+    /// Fields added after version 1 are optional when reading, so preferences saved by any earlier
+    /// version still load.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decode(Int.self, forKey: .schemaVersion)
+        profiles = try container.decode([RiderProfile].self, forKey: .profiles)
+        activeProfileID = try container.decode(UUID.self, forKey: .activeProfileID)
+        recentProfileIDs = try container.decode([UUID].self, forKey: .recentProfileIDs)
+        savedLocations = try container.decode([SavedLocation].self, forKey: .savedLocations)
+        evaluationLocation = try container.decode(EvaluationLocation.self, forKey: .evaluationLocation)
+        backgroundSource = try container.decodeIfPresent(BackgroundSource.self, forKey: .backgroundSource)
+        unitPreference = try container.decode(UnitPreference.self, forKey: .unitPreference)
+        syncEnabled = try container.decode(Bool.self, forKey: .syncEnabled)
+        todayRadius = try container.decodeIfPresent(TodayRadius.self, forKey: .todayRadius)
+        sharedModifiedAt = try container.decode(Date.self, forKey: .sharedModifiedAt)
+        deletedProfiles = try container.decode([UUID: Date].self, forKey: .deletedProfiles)
+        notifications =
+            try container.decodeIfPresent(NotificationSettings.self, forKey: .notifications) ?? NotificationSettings()
+    }
+}
+
+/// The daily ride notification: off until the rider turns it on, at 06:30 by default, on the
+/// days the active profile has ride windows (every day when it has none).
+public struct NotificationSettings: Sendable, Codable, Equatable {
+    public enum Days: Sendable, Codable, Equatable {
+        case rideWindowDays
+        case everyDay
+        /// Calendar weekday numbers: 1 is Sunday, 7 is Saturday.
+        case custom(Set<Int>)
+    }
+
+    public var isEnabled: Bool
+    public var minutesAfterMidnight: Int
+    public var days: Days
+
+    public init(isEnabled: Bool = false, minutesAfterMidnight: Int = 6 * 60 + 30, days: Days = .rideWindowDays) {
+        self.isEnabled = isEnabled
+        self.minutesAfterMidnight = minutesAfterMidnight
+        self.days = days
+    }
+
+    /// The weekdays notifications go out on for `profile`.
+    public func weekdays(for profile: RiderProfile) -> Set<Int> {
+        switch days {
+        case .everyDay: return Set(1...7)
+        case .custom(let weekdays): return weekdays
+        case .rideWindowDays:
+            let windowDays = profile.windows.reduce(into: Set<Int>()) { $0.formUnion($1.weekdays) }
+            return windowDays.isEmpty ? Set(1...7) : windowDays
+        }
     }
 }

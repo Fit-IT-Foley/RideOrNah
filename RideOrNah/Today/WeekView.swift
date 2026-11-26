@@ -6,6 +6,7 @@ import VerdictEngine
 struct WeekView: View {
     @Environment(AppModel.self) private var model
     @Environment(ForecastController.self) private var forecast
+    @Environment(RideCalendar.self) private var calendar
 
     var body: some View {
         NavigationStack {
@@ -37,11 +38,20 @@ struct WeekView: View {
                             NavigationLink(value: row.day) { WeekRow(row: row) }
                                 .buttonStyle(.plain)
                                 .accessibilityIdentifier("week.row")
+                            ForEach(calendar.suggestions(for: row.day), id: \.range.start) { suggestion in
+                                SuggestionPill(suggestion: suggestion).padding(.leading, 60).padding(.bottom, 12)
+                            }
                         }
                     }
                     .padding(.top, 16)
                     if forecast.outlookRows.isEmpty, !forecast.isLocked, let unknown = forecast.today?.unknown {
                         Text(unknown.title).foregroundStyle(Theme.inkSecondary).padding(.top, 16)
+                    }
+                    if calendar.isOn, !forecast.isLocked {
+                        Text(
+                            "Suggestions are clear daylight stretches of 2 hours or more. Adding one opens your calendar's own editor; Ride or Nah never reads your calendar."
+                        )
+                        .font(.footnote).foregroundStyle(Theme.inkTertiary).padding(.top, 16)
                     }
                     WeatherAttributionView(info: forecast.attribution).frame(maxWidth: .infinity).padding(.top, 20)
                 }
@@ -99,7 +109,9 @@ struct WeekRow: View {
 
 /// One day's evaluated hours and reasons, as the "Day detail" board draws it.
 struct DayDetailView: View {
+    @Environment(AppModel.self) private var model
     @Environment(ForecastController.self) private var forecast
+    @Environment(RideCalendar.self) private var calendar
     let day: Date
 
     var body: some View {
@@ -124,6 +136,9 @@ struct DayDetailView: View {
                     if !detail.reasons.isEmpty {
                         ReasonsCard(title: "Why \(detail.word.lowercased())", reasons: detail.reasons)
                     }
+                    ForEach(calendar.suggestions(for: day), id: \.range.start) { suggestion in
+                        SuggestionCard(suggestion: suggestion, detail: clearText)
+                    }
                     WeatherAttributionView(info: forecast.attribution).frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 20)
@@ -134,6 +149,14 @@ struct DayDetailView: View {
         .navigationTitle("Next 7 days")
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("detail.screen")
+    }
+
+    /// "Clear at every point in 25 mi", or "Clear here" for a local radius.
+    var clearText: String {
+        guard let radius = model.preferences?.radius(on: day, calendar: forecast.calendar), radius != .local else {
+            return "Clear here"
+        }
+        return "Clear at every point in \(radius.label(in: forecast.formatter.units))"
     }
 
     func hoursCard(_ detail: DayDetailContent) -> some View {

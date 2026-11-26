@@ -20,9 +20,11 @@ struct AppearanceTests {
             cache: ForecastCache(directory: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)),
             budget: nil)
         let light = try backgroundBrightness(
-            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast), in: .light)
+            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast)
+                .environment(RideCalendar(app: model, forecast: forecast)), in: .light)
         let dark = try backgroundBrightness(
-            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast), in: .dark)
+            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast)
+                .environment(RideCalendar(app: model, forecast: forecast)), in: .dark)
 
         #expect(light < 0.3, "the light system setting changed the background")
         #expect(dark < 0.3, "the dark background wasn't dark")

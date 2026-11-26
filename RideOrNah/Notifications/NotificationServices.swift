@@ -14,11 +14,36 @@ protocol NotificationCentering: AnyObject {
     func requestAuthorization() async -> Bool
     func pendingIdentifiers() async -> [String]
     func remove(_ identifiers: [String])
-    func add(id: String, body: String, at date: Date, day: Date) async
+    func add(id: String, body: String, at date: Date, day: Date, calendarRange: DateInterval?) async
+}
+
+/// The Add to Calendar action on a ride notification.
+enum CalendarAction {
+    static let category = "ride.calendar"
+    static let identifier = "calendar.add"
+
+    static func userInfo(_ range: DateInterval) -> [AnyHashable: Any] {
+        ["start": range.start.timeIntervalSince1970, "end": range.end.timeIntervalSince1970]
+    }
+
+    static func range(from userInfo: [AnyHashable: Any]) -> DateInterval? {
+        guard let start = userInfo["start"] as? TimeInterval, let end = userInfo["end"] as? TimeInterval, end > start
+        else { return nil }
+        return DateInterval(
+            start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end))
+    }
 }
 
 final class LiveNotificationCenter: NotificationCentering {
     let center = UNUserNotificationCenter.current()
+
+    init() {
+        let add = UNNotificationAction(
+            identifier: CalendarAction.identifier, title: "Add to Calendar", options: [.foreground])
+        center.setNotificationCategories([
+            UNNotificationCategory(identifier: CalendarAction.category, actions: [add], intentIdentifiers: [])
+        ])
+    }
 
     func authorization() async -> NotificationAuthorization {
         switch await center.notificationSettings().authorizationStatus {
@@ -40,11 +65,15 @@ final class LiveNotificationCenter: NotificationCentering {
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
-    func add(id: String, body: String, at date: Date, day: Date) async {
+    func add(id: String, body: String, at date: Date, day: Date, calendarRange: DateInterval?) async {
         let content = UNMutableNotificationContent()
         content.body = body
         content.sound = .default
         content.userInfo = ["day": day.timeIntervalSince1970]
+        if let calendarRange {
+            content.categoryIdentifier = CalendarAction.category
+            content.userInfo.merge(CalendarAction.userInfo(calendarRange)) { _, new in new }
+        }
         let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         let request = UNNotificationRequest(
             identifier: id, content: content,
@@ -57,7 +86,7 @@ final class LiveNotificationCenter: NotificationCentering {
     /// For tests and UI tests: records requests and answers the prompt without the system dialog.
     final class StubNotificationCenter: NotificationCentering {
         var status: NotificationAuthorization
-        private(set) var pending: [String: (body: String, date: Date)] = [:]
+        private(set) var pending: [String: (body: String, date: Date, calendarRange: DateInterval?)] = [:]
 
         init(status: NotificationAuthorization) { self.status = status }
 
@@ -68,7 +97,9 @@ final class LiveNotificationCenter: NotificationCentering {
         }
         func pendingIdentifiers() async -> [String] { Array(pending.keys) }
         func remove(_ identifiers: [String]) { for id in identifiers { pending[id] = nil } }
-        func add(id: String, body: String, at date: Date, day: Date) async { pending[id] = (body, date) }
+        func add(id: String, body: String, at date: Date, day: Date, calendarRange: DateInterval?) async {
+            pending[id] = (body, date, calendarRange)
+        }
     }
 #endif
 
@@ -94,6 +125,9 @@ enum NotificationScheduler {
     static func replace(with plan: [PlannedNotification], in center: any NotificationCentering) async {
         let existing = await center.pendingIdentifiers().filter { $0.hasPrefix(prefix) }
         center.remove(existing)
-        for item in plan { await center.add(id: item.id, body: item.body, at: item.fireDate, day: item.day) }
+        for item in plan {
+            await center.add(
+                id: item.id, body: item.body, at: item.fireDate, day: item.day, calendarRange: item.calendarRange)
+        }
     }
 }

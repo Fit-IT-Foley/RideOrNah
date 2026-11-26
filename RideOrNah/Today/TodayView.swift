@@ -22,6 +22,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 if let preferences = model.preferences { chips(preferences) }
+                AddedRideNotices()
                 if forecast.isLocked {
                     LockedCard(title: "Today's call")
                 } else if let today = forecast.today {

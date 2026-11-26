@@ -9,6 +9,9 @@ public struct PlannedNotification: Sendable, Equatable {
     /// Start of the day the notification is about.
     public var day: Date
     public var body: String
+    /// The day's longest ride opportunity, for the Add to Calendar action. Only set while ride
+    /// suggestions are on and the forecast will be no more than 3 hours old at delivery.
+    public var calendarRange: DateInterval? = nil
 }
 
 /// The daily ride notifications for the next three selected days, built on the phone from the
@@ -25,7 +28,8 @@ public struct NotificationPlanner: Sendable {
     public init(formatter: DisplayFormatter) { self.formatter = formatter }
 
     public func plan(
-        settings: NotificationSettings, profile: RiderProfile, outlook: [DayEvaluation]?, fetchedAt: Date?, now: Date
+        settings: NotificationSettings, profile: RiderProfile, outlook: [DayEvaluation]?, fetchedAt: Date?, now: Date,
+        suggestions: Bool = false
     ) -> [PlannedNotification] {
         guard settings.isEnabled else { return [] }
         let calendar = formatter.calendar
@@ -45,9 +49,18 @@ public struct NotificationPlanner: Sendable {
             planned.append(
                 PlannedNotification(
                     id: "ride.\(Self.key(day, calendar: calendar))", fireDate: fire, day: day,
-                    body: body(evaluation, fetchedAt: fetchedAt, fire: fire)))
+                    body: body(evaluation, fetchedAt: fetchedAt, fire: fire),
+                    calendarRange: suggestions
+                        ? calendarRange(evaluation, fetchedAt: fetchedAt, fire: fire) : nil))
         }
         return planned
+    }
+
+    func calendarRange(_ day: DayEvaluation?, fetchedAt: Date?, fire: Date) -> DateInterval? {
+        guard let day, let fetchedAt, fire.timeIntervalSince(fetchedAt) <= Self.staleAfter, let verdict = day.verdict,
+            verdict != .unknown
+        else { return nil }
+        return day.opportunities.first
     }
 
     func body(_ day: DayEvaluation?, fetchedAt: Date?, fire: Date) -> String {

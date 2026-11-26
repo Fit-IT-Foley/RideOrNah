@@ -7,7 +7,7 @@ let package = Package(
     name: "RideOrNahKit",
     platforms: [.iOS(.v26), .watchOS(.v26), .macOS(.v26)],
     products: [
-        .library(name: "SharedContainer", targets: ["SharedContainer"]),
+        .library(name: "SharedContainer", targets: ["SharedContainer"])
     ],
     targets: [
         .target(name: "SharedContainer"),

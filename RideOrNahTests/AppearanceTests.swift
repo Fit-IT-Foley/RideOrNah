@@ -4,19 +4,21 @@ import Testing
 
 @testable import RideOrNah
 
-/// Renders screens in each color scheme. Hosted simulators on CI ignore device appearance
-/// changes, so this is the appearance check that runs everywhere; the live switch is the UI test
-/// `AccessibilityTests.testSwitchingToDarkModeWhileOpenRedraws`, which runs on local simulators.
+/// The app always uses its dark look. Rendering in each system color scheme shows the screen
+/// ignores the setting. Hosted CI simulators can't switch the device appearance, so this is the
+/// check that runs everywhere; the live switch is `AccessibilityTests.testSwitchingAppearanceKeepsTheDarkLook`.
 @MainActor
 struct AppearanceTests {
+    // Scenario: app-platform: Light system setting
     // Scenario: app-platform: Switching appearance
-    @Test("Switching appearance")
-    func rootViewTakesItsColorsFromTheSystemScheme() throws {
-        let light = try backgroundBrightness(of: RootView(), in: .light)
-        let dark = try backgroundBrightness(of: RootView(), in: .dark)
+    @Test("Light system setting")
+    func rootViewStaysDarkInEitherSystemScheme() throws {
+        let model = AppModel.preview()
+        let light = try backgroundBrightness(of: RootView().environment(model), in: .light)
+        let dark = try backgroundBrightness(of: RootView().environment(model), in: .dark)
 
-        #expect(light > 0.7, "light background wasn't light")
-        #expect(dark < 0.3, "dark background wasn't dark")
+        #expect(light < 0.3, "the light system setting changed the background")
+        #expect(dark < 0.3, "the dark background wasn't dark")
     }
 
     /// Relative luminance (0–1) of one pixel of background, below the placeholder card.

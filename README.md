@@ -54,6 +54,15 @@ Forecasts come from Apple WeatherKit through `Packages/RideOrNahKit/Sources/Weat
 
 Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments, or pass them to `XCUIApplication().launchArguments` in a UI test. Release builds compile the fixtures and the debug screen out, and `make test-release` checks that.
 
+**Other debug launch arguments**, for UI tests and trying things out:
+
+| Argument | Effect |
+|---|---|
+| `-skipFirstRun YES` | Starts with a ready "My Bike" commuter profile instead of setup |
+| `-resetPreferences YES` | Clears saved preferences on launch, so setup runs again |
+| `-locationStub granted` or `denied` | Answers the location prompt without the system dialog |
+| `-searchStub YES` | Returns canned place-search results instead of asking Apple Maps |
+
 **WeatherKit setup (needs the Developer Program).** Live forecasts need the WeatherKit capability on the app's App ID (Certificates, Identifiers & Profiles → Identifiers → the app → WeatherKit), and the `com.apple.developer.weatherkit` entitlement, which `project.yml` already sets. A newly enabled capability can take about 30 minutes to start working. Until then, requests fail as "not authorized", and the app reports that rather than guessing.
 
 **Request budget.** Each refresh requests one point for a local radius, 9 points below 80 km (49.7 mi), and 17 from 80 km up. Cached forecasts are reused for 60 minutes in the foreground, 2 hours in the background and in widgets, and 15 minutes after a pull to refresh. Each device makes at most 150 requests a day.

@@ -6,7 +6,9 @@ final class AccessibilityTests: XCTestCase {
     @MainActor
     func testLargestAccessibilityTextSizeKeepsTextOnScreen() {
         let app = XCUIApplication()
-        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launchArguments += [
+            "-skipFirstRun", "YES", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+        ]
         app.launch()
 
         let window = app.windows.firstMatch
@@ -22,11 +24,11 @@ final class AccessibilityTests: XCTestCase {
         add(screenshot)
     }
 
-    // Hosted CI simulators ignore device appearance changes (the screen never leaves light mode),
-    // so CI sets CI=true and skips this; RideOrNahTests' AppearanceTests covers the scenario there.
+    // Hosted CI simulators ignore device appearance changes, so CI sets CI=true and skips this;
+    // RideOrNahTests' AppearanceTests covers the scenario there.
     // Scenario: app-platform: Switching appearance
     @MainActor
-    func testSwitchingToDarkModeWhileOpenRedraws() throws {
+    func testSwitchingAppearanceKeepsTheDarkLook() throws {
         try XCTSkipIf(
             ProcessInfo.processInfo.environment["CI"] == "true",
             "CI simulators ignore device appearance changes; AppearanceTests covers this scenario")
@@ -34,22 +36,18 @@ final class AccessibilityTests: XCTestCase {
         defer { XCUIDevice.shared.appearance = .light }
 
         let app = XCUIApplication()
+        app.launchArguments += ["-skipFirstRun", "YES"]
         app.launch()
         XCTAssertTrue(app.staticTexts["root.title"].waitForExistence(timeout: 10))
-        let lightBackground = try backgroundBrightness(of: app)
+        let withLightSystem = try backgroundBrightness(of: app)
 
         XCUIDevice.shared.appearance = .dark
-        // Simulators under load (two running at once, or CI) can take several seconds to redraw.
-        var darkBackground = try backgroundBrightness(of: app)
-        let deadline = Date.now.addingTimeInterval(15)
-        while darkBackground > 0.3, Date.now < deadline {
-            RunLoop.current.run(until: .now.addingTimeInterval(0.25))
-            darkBackground = try backgroundBrightness(of: app)
-        }
+        RunLoop.current.run(until: .now.addingTimeInterval(2))
+        let withDarkSystem = try backgroundBrightness(of: app)
 
         XCTAssertEqual(app.state, .runningForeground, "the app relaunched or left the foreground")
-        XCTAssertGreaterThan(lightBackground, 0.7, "light background wasn't light")
-        XCTAssertLessThan(darkBackground, 0.3, "background didn't turn dark while the app was open")
+        XCTAssertLessThan(withLightSystem, 0.3, "the light system setting made the app light")
+        XCTAssertLessThan(withDarkSystem, 0.3, "the app wasn't dark after switching")
     }
 
     /// Relative luminance (0–1) of one pixel of screen background, below the placeholder card.

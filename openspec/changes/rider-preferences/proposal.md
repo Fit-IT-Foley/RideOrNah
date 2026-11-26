@@ -23,7 +23,7 @@ The verdict is only as good as the limits and places behind it. A commuter on a 
 - `ride-locations`: current and saved evaluation locations, location permission, ride radius presets and today's override, and the background location source.
 
 ### Modified Capabilities
-- `app-platform`: Apple Maps joins the allowed network destinations, because place search and map display go to Apple Maps. Web pages open in Safari rather than inside the app.
+- `app-platform`: Apple Maps joins the allowed network destinations, because place search and map display go to Apple Maps. Web pages open in Safari rather than inside the app. The app also always uses the design's dark appearance instead of following the system light or dark setting.
 
 ## Impact
 

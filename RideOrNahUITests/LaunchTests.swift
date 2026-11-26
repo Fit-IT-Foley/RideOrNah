@@ -6,6 +6,7 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testLaunchShowsPlaceholderTitle() {
         let app = XCUIApplication()
+        app.launchArguments += ["-skipFirstRun", "YES"]
         app.launch()
 
         let title = app.staticTexts["root.title"]

@@ -12,3 +12,14 @@ The app SHALL work without any server operated by the developer. It SHALL NOT cr
 #### Scenario: Privacy label
 - **WHEN** the App Store privacy details are prepared
 - **THEN** the app qualifies for "Data Not Collected" and "Data Not Used to Track You"
+
+### Requirement: Light and dark appearance
+The app SHALL always use its dark appearance, as the design specifies, whatever the system's light or dark setting. Changing the system setting while the app is open SHALL NOT change the app's colors or restart it.
+
+#### Scenario: Switching appearance
+- **WHEN** the user switches the system from light to dark mode while the app is open
+- **THEN** the app keeps its dark appearance and stays open, without restarting
+
+#### Scenario: Light system setting
+- **WHEN** the system is set to light mode
+- **THEN** every screen still shows the app's dark appearance

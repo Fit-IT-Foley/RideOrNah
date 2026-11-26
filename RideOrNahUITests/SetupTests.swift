@@ -3,12 +3,12 @@ import XCTest
 /// First-run setup and settings, with stubbed location and place search (debug builds only).
 final class SetupTests: XCTestCase {
     @MainActor
-    private func launch(_ arguments: [String]) throws -> XCUIApplication {
+    private func launch(_ arguments: [String], access: String = "active") throws -> XCUIApplication {
         #if !DEBUG
             throw XCTSkip("Uses debug-only launch arguments")
         #else
             let app = XCUIApplication()
-            app.launchArguments += arguments
+            app.launchArguments += ["-accessStub", access] + arguments
             app.launch()
             return app
         #endif

@@ -15,6 +15,8 @@ final class NotificationCoordinator {
     private(set) var authorization = NotificationAuthorization.notDetermined
     /// What the next notification will say, for the Alerts tab's preview.
     private(set) var next: PlannedNotification?
+    /// When access ends because the subscription won't renew; nothing is scheduled past it.
+    var accessEnds: () -> Date? = { nil }
 
     init(app: AppModel, forecast: ForecastController, center: any NotificationCentering) {
         self.app = app
@@ -52,11 +54,18 @@ final class NotificationCoordinator {
 
     /// Rebuilds every pending notification from the newest forecast for the background place.
     func rebuild() async {
-        guard let preferences = app.preferences else { return }
+        guard let preferences = app.preferences, !forecast.isLocked else {
+            // Without access, nothing stays scheduled; settings are kept for when it returns.
+            next = nil
+            await NotificationScheduler.replace(with: [], in: center)
+            return
+        }
         let evaluation = await forecast.backgroundEvaluation()
+        let ends = accessEnds()
         let plan = NotificationPlanner(formatter: forecast.formatter).plan(
             settings: preferences.notifications, profile: preferences.activeProfile, outlook: evaluation?.outlook,
-            fetchedAt: evaluation?.fetchedAt, now: forecast.clock())
+            fetchedAt: evaluation?.fetchedAt, now: forecast.clock()
+        ).filter { item in ends.map { item.fireDate < $0 } ?? true }
         next = plan.first
         await NotificationScheduler.replace(with: plan, in: center)
         if let first = plan.first { BackgroundRefresh.schedule(beforeNotificationAt: first.fireDate) }

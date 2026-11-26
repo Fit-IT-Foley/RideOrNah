@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "VerdictEngine", targets: ["VerdictEngine"]),
         .library(name: "WeatherData", targets: ["WeatherData"]),
         .library(name: "RiderSettings", targets: ["RiderSettings"]),
+        .library(name: "Entitlements", targets: ["Entitlements"]),
         .library(name: "Presentation", targets: ["Presentation"]),
     ],
     targets: [
@@ -22,8 +23,11 @@ let package = Package(
         .testTarget(name: "WeatherDataTests", dependencies: ["WeatherData"]),
         .target(name: "RiderSettings", dependencies: ["VerdictEngine", "WeatherData"]),
         .testTarget(name: "RiderSettingsTests", dependencies: ["RiderSettings", "VerdictEngine", "WeatherData"]),
-        .target(name: "Presentation", dependencies: ["VerdictEngine", "WeatherData", "RiderSettings"]),
+        .target(name: "Entitlements"),
+        .testTarget(name: "EntitlementsTests", dependencies: ["Entitlements"]),
+        .target(name: "Presentation", dependencies: ["VerdictEngine", "WeatherData", "RiderSettings", "Entitlements"]),
         .testTarget(
-            name: "PresentationTests", dependencies: ["Presentation", "VerdictEngine", "WeatherData", "RiderSettings"]),
+            name: "PresentationTests",
+            dependencies: ["Presentation", "VerdictEngine", "WeatherData", "RiderSettings", "Entitlements"]),
     ]
 )

@@ -63,6 +63,7 @@ Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments
 | `-locationStub granted` or `denied` | Answers the location prompt without the system dialog |
 | `-searchStub YES` | Returns canned place-search results instead of asking Apple Maps |
 | `-notificationStub granted` or `denied` | Answers the notification prompt without the system dialog, and schedules nothing with iOS |
+| `-accessStub active` or `inactive` | Skips StoreKit with a fixed subscription state and stand-in plans, for UI tests. Without it, debug runs use `StoreKit/RideOrNah.storekit` |
 
 **Trying the morning notification.** Background refresh only runs on a device or in a simulator when iOS chooses to, so to see one arrive, set the time a minute or two ahead in the Alerts tab and lock the simulator. To force the background refresh while paused in the debugger, run `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.example.rideornah.refresh"]`, using the app's bundle ID.
 

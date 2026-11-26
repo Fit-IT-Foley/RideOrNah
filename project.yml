@@ -28,6 +28,8 @@ targets:
         product: RiderSettings
       - package: RideOrNahKit
         product: Presentation
+      - package: RideOrNahKit
+        product: Entitlements
     entitlements:
       path: RideOrNah/RideOrNah.entitlements
       properties:
@@ -63,6 +65,9 @@ targets:
       Release: Config/Base.xcconfig
     sources:
       - path: RideOrNahTests
+      # StoreKit Testing loads it from the test bundle (SKTestSession).
+      - path: StoreKit/RideOrNah.storekit
+        buildPhase: resources
     dependencies:
       - target: RideOrNah
     settings:
@@ -92,6 +97,9 @@ schemes:
     build:
       targets:
         RideOrNah: all
+    # Local StoreKit testing: the two plans with placeholder prices. App Store Connect sets the real ones.
+    run:
+      storeKitConfiguration: StoreKit/RideOrNah.storekit
     test:
       targets:
         - RideOrNahTests

@@ -31,6 +31,7 @@ struct WeekView: View {
                         Text("\(preferences.activeProfile.name) · \(forecast.place?.name ?? "No place")")
                             .font(.subheadline).foregroundStyle(Theme.inkSecondary).padding(.top, 6)
                     }
+                    if forecast.isLocked { LockedCard(title: "The week ahead").padding(.top, 16) }
                     VStack(spacing: 0) {
                         ForEach(forecast.outlookRows, id: \.day) { row in
                             NavigationLink(value: row.day) { WeekRow(row: row) }
@@ -39,7 +40,7 @@ struct WeekView: View {
                         }
                     }
                     .padding(.top, 16)
-                    if forecast.outlookRows.isEmpty, let unknown = forecast.today?.unknown {
+                    if forecast.outlookRows.isEmpty, !forecast.isLocked, let unknown = forecast.today?.unknown {
                         Text(unknown.title).foregroundStyle(Theme.inkSecondary).padding(.top, 16)
                     }
                     WeatherAttributionView(info: forecast.attribution).frame(maxWidth: .infinity).padding(.top, 20)

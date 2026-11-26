@@ -1,10 +1,16 @@
+import Entitlements
 import RiderSettings
+import StoreKit
 import SwiftUI
 
-/// Profiles, saved places, units and iCloud sync.
+/// Profiles, saved places, units, iCloud sync and the subscription.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @Environment(AccessController.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var managing = false
+    @State private var redeeming = false
+    @State private var showsPlans = false
 
     var body: some View {
         NavigationStack {
@@ -51,6 +57,22 @@ struct SettingsView: View {
                     } footer: {
                         Text("Profiles and places sync through your own iCloud. Nothing goes to us.")
                     }
+                    Section {
+                        LabeledContent("Plan", value: Self.planText(store.access))
+                            .accessibilityIdentifier("settings.plan")
+                        if store.access.isActive {
+                            Button("Manage subscription") { managing = true }
+                        } else {
+                            Button("See plans") { showsPlans = true }
+                                .accessibilityIdentifier("settings.seePlans")
+                        }
+                        Button("Restore Purchases") { Task { await store.restore() } }
+                        Button("Redeem code") { redeeming = true }
+                    } header: {
+                        Text("Subscription")
+                    } footer: {
+                        if let message = store.message { Text(message) }
+                    }
                     #if DEBUG
                         Section("Developer") {
                             NavigationLink("Weather pipeline") { WeatherDebugView() }
@@ -63,8 +85,21 @@ struct SettingsView: View {
             .background(Theme.ground)
             .navigationTitle("Settings")
             .toolbar { Button("Done") { dismiss() } }
+            .manageSubscriptionsSheet(isPresented: $managing)
+            .offerCodeRedemption(isPresented: $redeeming) { _ in Task { await store.refresh() } }
+            .fullScreenCover(isPresented: $showsPlans) { PaywallView { showsPlans = false } }
+            .onChange(of: store.access.isActive) { _, active in if active { showsPlans = false } }
         }
         .accessibilityIdentifier("settings.screen")
+    }
+
+    static func planText(_ access: Access) -> String {
+        switch access {
+        case .inactive: "Not subscribed"
+        case .active(let plan, let inTrial, let renews):
+            [plan == .annual ? "Annual" : "Monthly", inTrial ? "free trial" : nil, renews ? nil : "not renewing"]
+                .compactMap { $0 }.joined(separator: ", ")
+        }
     }
 
     func binding<Value>(_ keyPath: WritableKeyPath<Preferences, Value>) -> Binding<Value> {

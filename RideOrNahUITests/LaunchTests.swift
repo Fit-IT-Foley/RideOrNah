@@ -7,6 +7,7 @@ final class LaunchTests: XCTestCase {
     func testLaunchShowsPlaceholderTitle() {
         let app = XCUIApplication()
         app.launchArguments += [
+            "-accessStub", "active",
             "-skipFirstRun", "YES", "-locationStub", "granted", "-weatherSource", "fixture", "-weatherScenario",
             "afternoonRain", "-fixedNow", "2026-06-08T06:00",
         ]

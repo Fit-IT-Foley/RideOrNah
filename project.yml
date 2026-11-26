@@ -20,11 +20,16 @@ targets:
     dependencies:
       - package: RideOrNahKit
         product: SharedContainer
+      - package: RideOrNahKit
+        product: VerdictEngine
+      - package: RideOrNahKit
+        product: WeatherData
     entitlements:
       path: RideOrNah/RideOrNah.entitlements
       properties:
         com.apple.security.application-groups:
           - $(APP_GROUP_IDENTIFIER)
+        com.apple.developer.weatherkit: true
     info:
       path: RideOrNah/Info.plist
       properties:
@@ -80,4 +85,13 @@ schemes:
     test:
       targets:
         - RideOrNahTests
+        - RideOrNahUITests
+  # Runs UI tests against a Release build (`make test-release`), to check debug-only code is gone.
+  RideOrNahRelease:
+    build:
+      targets:
+        RideOrNah: all
+    test:
+      config: Release
+      targets:
         - RideOrNahUITests

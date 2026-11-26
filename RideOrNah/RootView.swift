@@ -43,6 +43,7 @@ struct RootView: View {
             case .paywall: PaywallView { access.showsPaywall = false }
             }
         }
+        .onOpenURL { model.open($0) }
         .sheet(item: calendarDraft) { draft in
             CalendarEditor(draft: draft) { saved in calendar.finish(saved: saved) }
                 .ignoresSafeArea()

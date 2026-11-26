@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import Presentation
 import RiderSettings
 import SharedContainer
 
@@ -11,6 +12,8 @@ final class AppModel {
     private(set) var firstRun: FirstRunFlow?
     /// The tab on screen; a notification tap switches to Today.
     var selectedTab = AppTab.today
+    /// Days pushed on the Week tab; a widget tap on a day opens its detail.
+    var weekPath: [Date] = []
     let store: PreferencesStore
     let location: any LocationProviding
     let placeSearch: any PlaceSearching
@@ -103,6 +106,21 @@ final class AppModel {
         store.save(finished)
         store.firstRunProgress = nil
         firstRun = nil
+        WidgetReloader.reload()
+    }
+
+    /// Opens a `rideornah://` link from a widget: Today, or a day's detail in Week.
+    func open(_ url: URL, calendar: Calendar = .current) {
+        switch RideURL(url, calendar: calendar) {
+        case .today?:
+            weekPath = []
+            selectedTab = .today
+        case .day(let day)?:
+            weekPath = [day]
+            selectedTab = .week
+        case nil:
+            break
+        }
     }
 
     // MARK: Changes
@@ -113,6 +131,7 @@ final class AppModel {
         try change(&current)
         preferences = current
         store.save(current)
+        WidgetReloader.reload()
     }
 
     /// Remembers where the rider is, on this device only, for "where I last opened the app".

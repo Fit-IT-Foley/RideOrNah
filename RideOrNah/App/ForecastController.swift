@@ -132,6 +132,7 @@ final class ForecastController {
         if snapshot.outcome == .alreadyCurrent { message = "Already up to date" }
         self.snapshot = snapshot
         evaluate()
+        if snapshot.networkRequests > 0 { WidgetReloader.reload() }
         if purpose != .background { await onRefreshed?() }
         if isLive, attribution == .fixture, let live = try? await WeatherAttributionInfo.live() { attribution = live }
     }

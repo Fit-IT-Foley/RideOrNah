@@ -104,6 +104,9 @@ final class AccessController {
         isChecking = false
         container.writeAccessMirror(AccessMirror(isActive: new.isActive, checkedAt: Date()))
         if new.isActive { showsPaywall = false }
-        if changed { await onChange?(new) }
+        if changed {
+            WidgetReloader.reload()
+            await onChange?(new)
+        }
     }
 }

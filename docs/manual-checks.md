@@ -21,3 +21,9 @@ Only list a scenario here when neither a Mac nor a simulator can check it: App S
 - **When:** before each App Store submission.
 - **How:** in App Store Connect → App Privacy, confirm the answers are "Data Not Collected" and that the app doesn't track. The privacy manifest's contents are tested by `RideOrNahTests/AppBundleTests.swift`.
 - **Why not a test:** the label lives in App Store Connect, not in the app.
+
+## widgets: Attribution review
+
+- **When:** before each App Store submission.
+- **How:** read Apple's current WeatherKit attribution guidelines (developer.apple.com/weatherkit/get-started). For each widget family (small, medium, circular, rectangular, inline), confirm either that it shows the Apple Weather mark, or that tapping it opens a screen that shows the mark and the "Weather data sources" link. Today and Day detail show both, and `WidgetLinkTests` checks the tap. Record the date and guideline version in the release notes.
+- **Why not a test:** the guidelines are Apple's document and change over time. A person has to read them against the widgets.

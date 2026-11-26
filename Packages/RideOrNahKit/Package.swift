@@ -25,7 +25,9 @@ let package = Package(
         .testTarget(name: "RiderSettingsTests", dependencies: ["RiderSettings", "VerdictEngine", "WeatherData"]),
         .target(name: "Entitlements"),
         .testTarget(name: "EntitlementsTests", dependencies: ["Entitlements"]),
-        .target(name: "Presentation", dependencies: ["VerdictEngine", "WeatherData", "RiderSettings", "Entitlements"]),
+        .target(
+            name: "Presentation",
+            dependencies: ["VerdictEngine", "WeatherData", "RiderSettings", "Entitlements", "SharedContainer"]),
         .testTarget(
             name: "PresentationTests",
             dependencies: ["Presentation", "VerdictEngine", "WeatherData", "RiderSettings", "Entitlements"]),

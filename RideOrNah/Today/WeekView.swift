@@ -9,7 +9,8 @@ struct WeekView: View {
     @Environment(RideCalendar.self) private var calendar
 
     var body: some View {
-        NavigationStack {
+        @Bindable var model = model
+        NavigationStack(path: $model.weekPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {

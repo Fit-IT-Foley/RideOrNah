@@ -7,6 +7,7 @@ final class AccessibilityTests: XCTestCase {
     func testLargestAccessibilityTextSizeKeepsTextOnScreen() {
         let app = XCUIApplication()
         app.launchArguments += [
+            "-accessStub", "active",
             "-skipFirstRun", "YES", "-locationStub", "granted", "-weatherSource", "fixture", "-weatherScenario",
             "afternoonRain", "-fixedNow", "2026-06-08T06:00",
             "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
@@ -41,6 +42,7 @@ final class AccessibilityTests: XCTestCase {
 
         let app = XCUIApplication()
         app.launchArguments += [
+            "-accessStub", "active",
             "-skipFirstRun", "YES", "-locationStub", "granted", "-weatherSource", "fixture", "-weatherScenario",
             "afternoonRain", "-fixedNow", "2026-06-08T06:00",
         ]

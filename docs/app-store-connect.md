@@ -136,3 +136,19 @@ The TestFlight upload pipeline gets its own OpenSpec change. It will need:
 5. **Versioning.** Take build numbers from `asc builds next-build-number` so uploads never collide.
 6. **Export compliance.** Set `ITSAppUsesNonExemptEncryption` in the Info.plist so builds don't wait on the encryption question.
 7. **The workflow.** Add a manually started, or tag-triggered, GitHub Actions job: archive, export an `.ipa`, `asc builds upload`, `asc builds wait`, then add the build to an internal TestFlight group. Upload jobs take a lot of macOS minutes, so keep them off pull requests.
+
+## Subscriptions
+
+The app sells two auto-renewable plans in one subscription group. Their product IDs are fixed in code (`Plan` in `RideOrNahKit/Sources/Entitlements`):
+
+| Product ID | Period | Introductory offer |
+|---|---|---|
+| `rideornah.annual` | 1 year | Free trial (1 week planned) |
+| `rideornah.monthly` | 1 month | Free trial (1 week planned) |
+
+- **Products.** Create them in App Store Connect under the app, with the same IDs, after the app record exists. Set prices, the trial length and Family Sharing there; the app reads them at runtime and never hard-codes them. `StoreKit/RideOrNah.storekit` mirrors them with placeholder prices ($29.99 and $4.99) for local testing only.
+- **Legal links.** The paywall links Terms of Use to Apple's standard licensed application end user license agreement, and the Privacy Policy to `docs/privacy-policy.md` on GitHub Pages (`LegalLinks` in `RideOrNah/Store/PaywallView.swift`). Use the same two URLs in the App Store listing. Before the first submission, the privacy policy URL must be live.
+- **Check on a device before each submission.** With a Sandbox Apple Account (Settings → Developer → Sandbox Apple Account on the iPhone), install a TestFlight or Xcode build. Then:
+  1. Start the free trial from the paywall, and confirm Today unlocks.
+  2. Cancel it in Settings → Subscriptions, and confirm the app shows "not renewing".
+  3. Delete and reinstall the app, then tap Restore Purchases, and confirm access returns.

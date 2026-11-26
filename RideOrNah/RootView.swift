@@ -4,10 +4,17 @@ enum AppTab: Hashable {
     case today, week, alerts
 }
 
+/// What covers the tabs: setup until it's done, then the paywall when it's asked for.
+enum Cover: String, Identifiable {
+    case firstRun, paywall
+    var id: String { rawValue }
+}
+
 /// The app's tabs. First-run setup covers everything until it's done.
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(ForecastController.self) private var forecast
+    @Environment(AccessController.self) private var access
     @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
         @State private var showsWeatherDebug = UserDefaults.standard.bool(forKey: "openWeatherDebug")
@@ -28,15 +35,34 @@ struct RootView: View {
         }
         .tint(Theme.accent)
         .background(Theme.ground)
-        .fullScreenCover(isPresented: .constant(model.needsFirstRun)) { FirstRunView() }
+        .fullScreenCover(item: cover) { cover in
+            switch cover {
+            case .firstRun: FirstRunView()
+            case .paywall: PaywallView { access.showsPaywall = false }
+            }
+        }
+        .onChange(of: model.needsFirstRun) { wasRunning, isRunning in
+            if wasRunning, !isRunning, !access.access.isActive { access.showsPaywall = true }
+        }
         .task(id: model.preferences?.activeProfileID) { await forecast.refresh(.foreground) }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await forecast.refresh(.foreground) } }
+            if phase == .active {
+                Task {
+                    await access.refresh()
+                    await forecast.refresh(.foreground)
+                }
+            }
         }
         .onChange(of: model.preferences?.activeProfile) { _, _ in forecast.evaluate() }
         #if DEBUG
             .sheet(isPresented: $showsWeatherDebug) { WeatherDebugView() }
         #endif
+    }
+
+    var cover: Binding<Cover?> {
+        Binding(
+            get: { model.needsFirstRun ? .firstRun : access.showsPaywall ? .paywall : nil },
+            set: { if $0 == nil { access.showsPaywall = false } })
     }
 }
 
@@ -48,5 +74,7 @@ struct RootView: View {
             .environment(model)
             .environment(forecast)
             .environment(NotificationCoordinator.live(app: model, forecast: forecast))
+            .environment(
+                AccessController(store: StubStore(active: true), container: .current()))
     }
 #endif

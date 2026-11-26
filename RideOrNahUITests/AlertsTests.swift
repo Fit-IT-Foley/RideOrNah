@@ -11,6 +11,7 @@ final class AlertsTests: XCTestCase {
         #else
             let app = XCUIApplication()
             app.launchArguments += [
+                "-accessStub", "active",
                 "-skipFirstRun", "YES", "-resetPreferences", "YES", "-locationStub", "granted", "-weatherSource",
                 "fixture", "-weatherScenario", "clearDay", "-fixedNow", "2026-06-08T05:00", "-notificationStub",
                 "granted",

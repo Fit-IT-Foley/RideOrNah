@@ -9,6 +9,7 @@ final class WeatherPipelineTests: XCTestCase {
         #else
             let app = XCUIApplication()
             app.launchArguments += [
+                "-accessStub", "active",
                 "-skipFirstRun", "YES", "-openWeatherDebug", "YES", "-weatherSource", "fixture", "-weatherScenario",
                 scenario,
             ]
@@ -54,6 +55,7 @@ final class ReleaseBuildTests: XCTestCase {
         #else
             let app = XCUIApplication()
             app.launchArguments += [
+                "-accessStub", "active",
                 "-openWeatherDebug", "YES", "-weatherSource", "fixture", "-weatherScenario", "stormToTheNorth",
             ]
             app.launch()

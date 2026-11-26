@@ -24,6 +24,8 @@ final class ForecastController {
     /// A short message such as "Already up to date", cleared on the next refresh.
     private(set) var message: String?
     private(set) var attribution = WeatherAttributionInfo.fixture
+    /// True without a subscription: nothing is fetched or shown, and settings stay editable.
+    private(set) var isLocked = false
 
     let app: AppModel
     let source: Source
@@ -109,7 +111,7 @@ final class ForecastController {
 
     /// Fetches what's needed for `purpose` (cached data is reused within its interval) and evaluates.
     func refresh(_ purpose: RefreshPurpose) async {
-        guard let preferences = app.preferences else { return }
+        guard let preferences = app.preferences, !isLocked else { return }
         isRefreshing = true
         defer { isRefreshing = false }
         message = nil
@@ -140,7 +142,7 @@ final class ForecastController {
     /// The outlook at the background location source (for notifications), with today's radius,
     /// from cache where possible. Nil when there's no background place.
     func backgroundEvaluation() async -> (outlook: [DayEvaluation]?, fetchedAt: Date?)? {
-        guard let preferences = app.preferences,
+        guard !isLocked, let preferences = app.preferences,
             let place = preferences.backgroundPlace(lastSeen: app.store.lastSeenLocation)
         else { return nil }
         let now = clock()
@@ -155,6 +157,15 @@ final class ForecastController {
         )
         .map(VerdictEngine.outlook(for:))
         return (outlook, snapshot.fetchedAt)
+    }
+
+    /// Locks or unlocks. Locking drops the forecast in hand, so no weather is shown.
+    func setLocked(_ locked: Bool) {
+        isLocked = locked
+        guard locked else { return }
+        snapshot = nil
+        outlook = nil
+        message = nil
     }
 
     /// Re-evaluates the snapshot already in hand, for profile changes that need no new data.

@@ -22,7 +22,9 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 if let preferences = model.preferences { chips(preferences) }
-                if let today = forecast.today {
+                if forecast.isLocked {
+                    LockedCard(title: "Today's call")
+                } else if let today = forecast.today {
                     freshness(today)
                     if let unknown = today.unknown {
                         unknownCard(unknown)

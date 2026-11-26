@@ -20,13 +20,10 @@ struct AlertsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Wordmark()
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    Text("MORNING CALL")
-                    Text(".").foregroundStyle(Theme.accent)
-                }
-                .font(Theme.display(.largeTitle))
-                .foregroundStyle(Theme.ink)
-                .accessibilityAddTraits(.isHeader)
+                Text("MORNING CALL\(Text(".").foregroundStyle(Theme.accent))")
+                    .font(Theme.display(.largeTitle))
+                    .foregroundStyle(Theme.ink)
+                    .accessibilityAddTraits(.isHeader)
                 Text("One notification a day, built on your phone.").font(.title3.weight(.semibold)).foregroundStyle(
                     Theme.ink)
                 Text("Each one uses the newest forecast on this iPhone. Nothing about you is sent anywhere.")
@@ -55,6 +52,10 @@ struct AlertsView: View {
             }
             .tint(Theme.accent)
             .accessibilityIdentifier("alerts.toggle")
+            if forecast.isLocked, settings.isEnabled {
+                Text("Notifications start again once you subscribe. Your settings are kept.")
+                    .font(.subheadline).foregroundStyle(Theme.reasonWarm).accessibilityIdentifier("alerts.locked")
+            }
             if let note = Self.permissionNote(for: notifications.authorization) {
                 Text(note).font(.subheadline).foregroundStyle(Theme.reasonWarm).accessibilityIdentifier("alerts.denied")
                 if let url = URL(string: UIApplication.openNotificationSettingsURLString) {

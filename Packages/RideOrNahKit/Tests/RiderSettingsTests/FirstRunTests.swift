@@ -12,6 +12,8 @@ struct FirstRunTests {
         flow.choose(.commute)
         flow.confirmLimits()
         flow.locationPermission(granted: true)
+        #expect(flow.step == .notifications)
+        flow.skipNotifications()
         #expect(flow.step == .done)
         let preferences = flow.finish(now: SettingsFixtures.morning)
         #expect(preferences.activeProfile.name == "My Bike")
@@ -42,6 +44,8 @@ struct FirstRunTests {
         flow.locationPermission(granted: false)
         #expect(flow.step == .addSavedLocation)
         flow.addSavedLocation(named: "Home", at: SettingsFixtures.newYork)
+        #expect(flow.step == .notifications)
+        flow.skipNotifications()
         #expect(flow.step == .done)
         let preferences = flow.finish()
         #expect(preferences.evaluationPlace(current: nil)?.name == "Home")
@@ -54,5 +58,44 @@ struct FirstRunTests {
         limits.cold.soft = 7
         flow.confirmLimits(limits)
         #expect(flow.finish().activeProfile.limits.cold.soft == 7)
+    }
+
+    // Scenario: ride-notifications: Turning it on during setup
+    @Test("Turning it on during setup")
+    func turningItOnDuringSetup() {
+        var flow = FirstRunFlow(now: SettingsFixtures.morning)
+        flow.choose(.commute)
+        flow.confirmLimits()
+        flow.locationPermission(granted: true)
+        flow.enableNotifications(at: 5 * 60 + 45)
+        #expect(flow.step == .done)
+        let notifications = flow.finish().notifications
+        #expect(notifications.isEnabled)
+        #expect(notifications.minutesAfterMidnight == 345)
+    }
+
+    // Scenario: ride-notifications: Skipping the step
+    @Test("Skipping the step")
+    func skippingTheStep() {
+        var flow = FirstRunFlow(now: SettingsFixtures.morning)
+        flow.choose(.commute)
+        flow.confirmLimits()
+        flow.locationPermission(granted: true)
+        flow.skipNotifications()
+        #expect(flow.finish().notifications.isEnabled == false)
+    }
+
+    // Scenario: ride-notifications: Weekend rider default
+    @Test("Weekend rider default")
+    func weekendRiderDefault() {
+        let profile = RiderProfile.defaults(named: "Weekend", style: .weekends)
+        #expect(NotificationSettings().weekdays(for: profile) == [1, 7])
+    }
+
+    // Scenario: ride-notifications: Anytime rider default
+    @Test("Anytime rider default")
+    func anytimeRiderDefault() {
+        let profile = RiderProfile.defaults(named: "Any", style: .anytime)
+        #expect(NotificationSettings().weekdays(for: profile) == Set(1...7))
     }
 }

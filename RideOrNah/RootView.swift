@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-    case today, week
+    case today, week, alerts
 }
 
 /// The app's tabs. First-run setup covers everything until it's done.
@@ -9,18 +9,21 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(ForecastController.self) private var forecast
     @Environment(\.scenePhase) private var scenePhase
-    @State private var tab = AppTab.today
     #if DEBUG
         @State private var showsWeatherDebug = UserDefaults.standard.bool(forKey: "openWeatherDebug")
     #endif
 
     var body: some View {
-        TabView(selection: $tab) {
+        @Bindable var model = model
+        TabView(selection: $model.selectedTab) {
             Tab("Today", systemImage: "gauge.open.with.lines.needle.33percent", value: AppTab.today) {
-                TodayView(tab: $tab)
+                TodayView(tab: $model.selectedTab)
             }
             Tab("Week", systemImage: "calendar", value: AppTab.week) {
                 WeekView()
+            }
+            Tab("Alerts", systemImage: "bell", value: AppTab.alerts) {
+                AlertsView()
             }
         }
         .tint(Theme.accent)
@@ -40,8 +43,10 @@ struct RootView: View {
 #if DEBUG
     #Preview {
         let model = AppModel.preview()
+        let forecast = ForecastController.live(app: model)
         RootView()
             .environment(model)
-            .environment(ForecastController.live(app: model))
+            .environment(forecast)
+            .environment(NotificationCoordinator.live(app: model, forecast: forecast))
     }
 #endif

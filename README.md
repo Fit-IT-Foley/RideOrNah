@@ -62,6 +62,9 @@ Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments
 | `-resetPreferences YES` | Clears saved preferences on launch, so setup runs again |
 | `-locationStub granted` or `denied` | Answers the location prompt without the system dialog |
 | `-searchStub YES` | Returns canned place-search results instead of asking Apple Maps |
+| `-notificationStub granted` or `denied` | Answers the notification prompt without the system dialog, and schedules nothing with iOS |
+
+**Trying the morning notification.** Background refresh only runs on a device or in a simulator when iOS chooses to, so to see one arrive, set the time a minute or two ahead in the Alerts tab and lock the simulator. To force the background refresh while paused in the debugger, run `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.example.rideornah.refresh"]`, using the app's bundle ID.
 
 **WeatherKit setup (needs the Developer Program).** Live forecasts need the WeatherKit capability on the app's App ID (Certificates, Identifiers & Profiles → Identifiers → the app → WeatherKit), and the `com.apple.developer.weatherkit` entitlement, which `project.yml` already sets. A newly enabled capability can take about 30 minutes to start working. Until then, requests fail as "not authorized", and the app reports that rather than guessing.
 

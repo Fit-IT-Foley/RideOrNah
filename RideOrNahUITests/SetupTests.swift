@@ -29,6 +29,9 @@ final class SetupTests: XCTestCase {
         app.buttons["firstRun.style.commute"].tap()
         app.buttons["firstRun.limits.confirm"].tap()
         app.buttons["firstRun.location.allow"].tap()
+        let skip = app.buttons["firstRun.notifications.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 5))
+        skip.tap()
         let profile = app.buttons["today.profileChip"]
         XCTAssertTrue(profile.waitForExistence(timeout: 10))
         XCTAssertEqual(profile.label, "Profile: My Bike. Change profile")

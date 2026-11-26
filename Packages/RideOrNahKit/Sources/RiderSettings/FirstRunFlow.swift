@@ -11,6 +11,8 @@ public struct FirstRunFlow: Sendable, Codable, Equatable {
         case locationExplanation
         /// Reached when location permission is denied: setup continues with a saved place.
         case addSavedLocation
+        /// The daily ride notification: turn it on at a time, or skip without asking permission.
+        case notifications
         case done
     }
 
@@ -19,6 +21,7 @@ public struct FirstRunFlow: Sendable, Codable, Equatable {
     public private(set) var step: Step = .style
     public private(set) var draft: RiderProfile
     public private(set) var savedLocations: [SavedLocation] = []
+    public private(set) var notifications = NotificationSettings()
 
     public init(now: Date = Date()) {
         draft = .defaults(named: Self.defaultProfileName, now: now)
@@ -36,11 +39,23 @@ public struct FirstRunFlow: Sendable, Codable, Equatable {
     }
 
     public mutating func locationPermission(granted: Bool) {
-        step = granted ? .done : .addSavedLocation
+        step = granted ? .notifications : .addSavedLocation
     }
 
     public mutating func addSavedLocation(named name: String, at coordinate: GeoCoordinate) {
         savedLocations.append(SavedLocation(name: name, coordinate: coordinate))
+        step = .notifications
+    }
+
+    /// Turns the daily notification on at `minutesAfterMidnight`; call after permission is granted.
+    public mutating func enableNotifications(at minutesAfterMidnight: Int) {
+        notifications = NotificationSettings(isEnabled: true, minutesAfterMidnight: minutesAfterMidnight)
+        step = .done
+    }
+
+    /// Leaves the daily notification off; no permission is asked.
+    public mutating func skipNotifications() {
+        notifications = NotificationSettings()
         step = .done
     }
 
@@ -50,6 +65,7 @@ public struct FirstRunFlow: Sendable, Codable, Equatable {
         profile.modifiedAt = now
         var preferences = Preferences(firstProfile: profile, now: now)
         preferences.savedLocations = savedLocations
+        preferences.notifications = notifications
         if let first = savedLocations.first { preferences.evaluationLocation = .saved(first.id) }
         return preferences
     }

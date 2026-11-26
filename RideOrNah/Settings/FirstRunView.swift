@@ -18,6 +18,7 @@ struct FirstRunView: View {
                         case .limits: LimitsStep(limits: flow.draft.limits)
                         case .locationExplanation: LocationStep()
                         case .addSavedLocation: SavedPlaceStep()
+                        case .notifications: NotificationStep()
                         case .done: EmptyView()
                         }
                     }
@@ -132,6 +133,38 @@ private struct SavedPlaceStep: View {
             PlaceSearchView { result in
                 model.updateFirstRun { $0.addSavedLocation(named: "Home", at: result.coordinate) }
             }
+        }
+    }
+}
+
+private struct NotificationStep: View {
+    @Environment(AppModel.self) private var model
+    @Environment(NotificationCoordinator.self) private var notifications
+    @State private var time = Calendar.current.date(bySettingHour: 6, minute: 30, second: 0, of: Date()) ?? Date()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            StepHeader(
+                title: "Morning call",
+                detail:
+                    "Get your verdict and the main reason once a day, before you gear up. It's built on your phone; nothing about you is sent anywhere."
+            )
+            DatePicker("Notify me at", selection: $time, displayedComponents: .hourAndMinute)
+                .foregroundStyle(Theme.ink)
+                .accessibilityIdentifier("firstRun.notifications.time")
+            Button("Turn on") {
+                Task {
+                    let parts = Calendar.current.dateComponents([.hour, .minute], from: time)
+                    let minutes = (parts.hour ?? 6) * 60 + (parts.minute ?? 30)
+                    let granted = await notifications.center.requestAuthorization()
+                    model.updateFirstRun { granted ? $0.enableNotifications(at: minutes) : $0.skipNotifications() }
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .accessibilityIdentifier("firstRun.notifications.on")
+            Button("Not now") { model.updateFirstRun { $0.skipNotifications() } }
+                .buttonStyle(SecondaryButtonStyle())
+                .accessibilityIdentifier("firstRun.notifications.skip")
         }
     }
 }

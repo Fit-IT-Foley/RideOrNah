@@ -44,6 +44,10 @@ targets:
         RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
         NSLocationWhenInUseUsageDescription: Ride or Nah uses your location only to check the weather where you ride. It's rounded to about a kilometre and sent only to Apple Weather.
         NSLocationDefaultAccuracyReduced: true
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - $(PRODUCT_BUNDLE_IDENTIFIER).refresh
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah

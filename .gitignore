@@ -18,3 +18,7 @@ Config/Local.xcconfig
 
 # macOS
 .DS_Store
+
+# App Store Connect API keys and repo-local asc config (see docs/app-store-connect.md)
+*.p8
+.asc/

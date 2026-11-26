@@ -78,3 +78,26 @@ format:
 
 validate-specs:
 	$(OPENSPEC) validate --all --strict
+
+# App Store Connect, through the pinned `asc` CLI. Setup and key handling: docs/app-store-connect.md
+# Read-only: asc refuses any request that would change data, and sends no telemetry.
+#   make asc-status      Check the stored API key against Apple
+#   make asc-apps        List the team's apps
+#   make asc-bundle-ids  List the team's bundle IDs
+.PHONY: asc-check asc-status asc-apps asc-bundle-ids
+
+ASC := ASC_READ_ONLY=1 asc --no-telemetry
+
+asc-check:
+	@command -v asc >/dev/null 2>&1 || { \
+		echo "error: asc is not installed. See docs/app-store-connect.md" >&2; \
+		exit 1; }
+
+asc-status: asc-check
+	@$(ASC) auth status --validate --output table
+
+asc-apps: asc-check
+	@$(ASC) apps list --paginate --output table
+
+asc-bundle-ids: asc-check
+	@$(ASC) bundle-ids list --paginate --output table

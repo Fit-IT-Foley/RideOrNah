@@ -30,6 +30,7 @@ open RideOrNah.xcodeproj
 | `make lint` | Fail if any Swift file doesn't match the style in `.swift-format` |
 | `make format` | Rewrite Swift files to match `.swift-format` |
 | `make validate-specs` | Run `openspec validate --all --strict` (uses `npx` if `openspec` isn't installed) |
+| `make asc-status`, `make asc-apps`, `make asc-bundle-ids` | Read-only App Store Connect checks through `asc` (see [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
 
 To run the UI tests on one simulator, look it up by device name and iOS version (a major like `26` picks the newest installed 26.x):
 
@@ -81,6 +82,8 @@ cp Config/Local.xcconfig.example Config/Local.xcconfig
 ```
 
 `Config/Local.xcconfig` sets `BUNDLE_ID_PREFIX` and `DEVELOPMENT_TEAM`. It's gitignored, so personal identifiers stay out of the repository. The app group is derived from the prefix as `group.<prefix>.rideornah`.
+
+App Store Connect is driven from the command line with an API key, not a browser sign-in. See [`docs/app-store-connect.md`](docs/app-store-connect.md) for setup, key handling and the `make asc-*` commands.
 
 ## Layout
 

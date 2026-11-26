@@ -17,7 +17,10 @@ targets:
       Release: Config/Base.xcconfig
     sources:
       - path: RideOrNah
+      # The widget views, so app-hosted tests can render them.
+      - path: Widgets/Views
     dependencies:
+      - target: RideOrNahWidgets
       - package: RideOrNahKit
         product: SharedContainer
       - package: RideOrNahKit
@@ -50,11 +53,56 @@ targets:
           - fetch
         BGTaskSchedulerPermittedIdentifiers:
           - $(PRODUCT_BUNDLE_IDENTIFIER).refresh
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes:
+              - rideornah
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+
+  # Home Screen and Lock Screen widgets, reading the app's cache, settings and access mirror.
+  RideOrNahWidgets:
+    type: app-extension
+    platform: iOS
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: Widgets
+      - path: RideOrNah/DesignSystem
+    dependencies:
+      - package: RideOrNahKit
+        product: SharedContainer
+      - package: RideOrNahKit
+        product: VerdictEngine
+      - package: RideOrNahKit
+        product: WeatherData
+      - package: RideOrNahKit
+        product: RiderSettings
+      - package: RideOrNahKit
+        product: Presentation
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: Widgets/RideOrNahWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
+        com.apple.developer.weatherkit: true
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Ride or Nah
+        RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.widgets
+        TARGETED_DEVICE_FAMILY: "1"
 
   # Unit tests hosted in the app, for checks that need the built app bundle.
   RideOrNahTests:

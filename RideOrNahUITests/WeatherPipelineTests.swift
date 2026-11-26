@@ -9,7 +9,8 @@ final class WeatherPipelineTests: XCTestCase {
         #else
             let app = XCUIApplication()
             app.launchArguments += [
-                "-openWeatherDebug", "YES", "-weatherSource", "fixture", "-weatherScenario", scenario,
+                "-skipFirstRun", "YES", "-openWeatherDebug", "YES", "-weatherSource", "fixture", "-weatherScenario",
+                scenario,
             ]
             app.launch()
             return app
@@ -56,7 +57,11 @@ final class ReleaseBuildTests: XCTestCase {
                 "-openWeatherDebug", "YES", "-weatherSource", "fixture", "-weatherScenario", "stormToTheNorth",
             ]
             app.launch()
-            XCTAssertTrue(app.staticTexts["root.title"].waitForExistence(timeout: 10))
+            // Release builds have no setup shortcut, so the app opens on setup or the root screen.
+            let opened =
+                app.staticTexts["root.title"].waitForExistence(timeout: 10)
+                || app.descendants(matching: .any)["firstRun.screen"].exists
+            XCTAssertTrue(opened)
             XCTAssertFalse(app.descendants(matching: .any)["weatherDebug.screen"].exists)
             XCTAssertFalse(app.buttons["root.weatherDebug"].exists)
             XCTAssertFalse(app.staticTexts["weatherDebug.requests"].exists)

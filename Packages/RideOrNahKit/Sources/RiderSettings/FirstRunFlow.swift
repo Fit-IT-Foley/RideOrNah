@@ -1,0 +1,56 @@
+import Foundation
+import VerdictEngine
+import WeatherData
+
+/// First-run setup as a state machine. The app saves it after every step, so quitting resumes
+/// where the rider left off.
+public struct FirstRunFlow: Sendable, Codable, Equatable {
+    public enum Step: String, Sendable, Codable, CaseIterable {
+        case style
+        case limits
+        case locationExplanation
+        /// Reached when location permission is denied: setup continues with a saved place.
+        case addSavedLocation
+        case done
+    }
+
+    public static let defaultProfileName = "My Bike"
+
+    public private(set) var step: Step = .style
+    public private(set) var draft: RiderProfile
+    public private(set) var savedLocations: [SavedLocation] = []
+
+    public init(now: Date = Date()) {
+        draft = .defaults(named: Self.defaultProfileName, now: now)
+    }
+
+    public mutating func choose(_ style: RidingStyle) {
+        draft.windows = style.windows
+        step = .limits
+    }
+
+    /// Keeps the default limits, or takes the reviewed ones.
+    public mutating func confirmLimits(_ limits: Limits? = nil) {
+        if let limits { draft.limits = limits }
+        step = .locationExplanation
+    }
+
+    public mutating func locationPermission(granted: Bool) {
+        step = granted ? .done : .addSavedLocation
+    }
+
+    public mutating func addSavedLocation(named name: String, at coordinate: GeoCoordinate) {
+        savedLocations.append(SavedLocation(name: name, coordinate: coordinate))
+        step = .done
+    }
+
+    /// The rider's preferences once setup is done: an active "My Bike" profile and any saved place.
+    public func finish(now: Date = Date()) -> Preferences {
+        var profile = draft
+        profile.modifiedAt = now
+        var preferences = Preferences(firstProfile: profile, now: now)
+        preferences.savedLocations = savedLocations
+        if let first = savedLocations.first { preferences.evaluationLocation = .saved(first.id) }
+        return preferences
+    }
+}

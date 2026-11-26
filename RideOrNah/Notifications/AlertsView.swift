@@ -96,6 +96,30 @@ struct AlertsView: View {
             }
             if let next = notifications.next { preview(next) }
         }
+        Card {
+            SectionLabel(text: "Ride suggestions")
+            Toggle(isOn: suggestionsBinding(preferences.rideSuggestions)) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Suggest clear stretches").font(.headline).foregroundStyle(Theme.ink)
+                    Text("Adds them to the outlook, with Add to Calendar. We never read your calendar.")
+                        .font(.subheadline).foregroundStyle(Theme.inkTertiary)
+                }
+            }
+            .tint(Theme.accent)
+            .accessibilityIdentifier("alerts.suggestions")
+        }
+    }
+
+    func suggestionsBinding(_ isOn: Bool) -> Binding<Bool> {
+        Binding(
+            get: { isOn },
+            set: { on in
+                model.update {
+                    $0.rideSuggestions = on
+                    $0.sharedModifiedAt = Date()
+                }
+                Task { await notifications.rebuild() }
+            })
     }
 
     func preview(_ next: PlannedNotification) -> some View {

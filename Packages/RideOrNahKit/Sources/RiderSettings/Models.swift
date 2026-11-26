@@ -167,6 +167,8 @@ public struct Preferences: Sendable, Codable, Equatable {
     public var deletedProfiles: [UUID: Date]
     /// The daily ride notification. Added after version 1, so older saves load with the default.
     public var notifications: NotificationSettings
+    /// Ride suggestions with Add to Calendar in the outlook. Off until the rider opts in.
+    public var rideSuggestions: Bool
 
     public init(firstProfile: RiderProfile, now: Date = Date()) {
         schemaVersion = Self.schemaVersion
@@ -182,12 +184,13 @@ public struct Preferences: Sendable, Codable, Equatable {
         sharedModifiedAt = now
         deletedProfiles = [:]
         notifications = NotificationSettings()
+        rideSuggestions = false
     }
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion, profiles, activeProfileID, recentProfileIDs, savedLocations, evaluationLocation
         case backgroundSource, unitPreference, syncEnabled, todayRadius, sharedModifiedAt, deletedProfiles
-        case notifications
+        case notifications, rideSuggestions
     }
 
     /// Fields added after version 1 are optional when reading, so preferences saved by any earlier
@@ -208,6 +211,7 @@ public struct Preferences: Sendable, Codable, Equatable {
         deletedProfiles = try container.decode([UUID: Date].self, forKey: .deletedProfiles)
         notifications =
             try container.decodeIfPresent(NotificationSettings.self, forKey: .notifications) ?? NotificationSettings()
+        rideSuggestions = try container.decodeIfPresent(Bool.self, forKey: .rideSuggestions) ?? false
     }
 }
 

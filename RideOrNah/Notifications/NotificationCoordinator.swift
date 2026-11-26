@@ -64,7 +64,7 @@ final class NotificationCoordinator {
         let ends = accessEnds()
         let plan = NotificationPlanner(formatter: forecast.formatter).plan(
             settings: preferences.notifications, profile: preferences.activeProfile, outlook: evaluation?.outlook,
-            fetchedAt: evaluation?.fetchedAt, now: forecast.clock()
+            fetchedAt: evaluation?.fetchedAt, now: forecast.clock(), suggestions: preferences.rideSuggestions
         ).filter { item in ends.map { item.fireDate < $0 } ?? true }
         next = plan.first
         await NotificationScheduler.replace(with: plan, in: center)
@@ -78,9 +78,12 @@ final class NotificationCoordinator {
     }
 }
 
-/// Opens Today when the rider taps a ride notification, and shows it while the app is open.
+/// Opens Today when the rider taps a ride notification, with the event editor for Add to
+/// Calendar, and shows notifications while the app is open.
 final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     let app: AppModel
+    /// Opens the event editor for a range.
+    var addToCalendar: (DateInterval) -> Void = { _ in }
 
     init(app: AppModel) { self.app = app }
 
@@ -88,10 +91,25 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         app.selectedTab = .today
     }
 
+    func handle(action: String, userInfo: [AnyHashable: Any]) {
+        openToday()
+        if action == CalendarAction.identifier, let range = CalendarAction.range(from: userInfo) {
+            addToCalendar(range)
+        }
+    }
+
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
-        await MainActor.run { openToday() }
+        let action = response.actionIdentifier
+        let userInfo = response.notification.request.content.userInfo
+        let start = userInfo["start"] as? TimeInterval
+        let end = userInfo["end"] as? TimeInterval
+        await MainActor.run {
+            var info: [AnyHashable: Any] = [:]
+            if let start, let end { info = ["start": start, "end": end] }
+            handle(action: action, userInfo: info)
+        }
     }
 
     nonisolated func userNotificationCenter(

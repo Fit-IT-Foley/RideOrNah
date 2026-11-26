@@ -1,3 +1,4 @@
+import Presentation
 import SwiftUI
 
 enum AppTab: Hashable {
@@ -15,6 +16,7 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(ForecastController.self) private var forecast
     @Environment(AccessController.self) private var access
+    @Environment(RideCalendar.self) private var calendar
     @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
         @State private var showsWeatherDebug = UserDefaults.standard.bool(forKey: "openWeatherDebug")
@@ -41,6 +43,10 @@ struct RootView: View {
             case .paywall: PaywallView { access.showsPaywall = false }
             }
         }
+        .sheet(item: calendarDraft) { draft in
+            CalendarEditor(draft: draft) { saved in calendar.finish(saved: saved) }
+                .ignoresSafeArea()
+        }
         .onChange(of: model.needsFirstRun) { wasRunning, isRunning in
             if wasRunning, !isRunning, !access.access.isActive { access.showsPaywall = true }
         }
@@ -59,6 +65,10 @@ struct RootView: View {
         #endif
     }
 
+    var calendarDraft: Binding<CalendarDraft?> {
+        Binding(get: { calendar.draft }, set: { if $0 == nil, calendar.draft != nil { calendar.finish(saved: false) } })
+    }
+
     var cover: Binding<Cover?> {
         Binding(
             get: { model.needsFirstRun ? .firstRun : access.showsPaywall ? .paywall : nil },
@@ -75,6 +85,8 @@ struct RootView: View {
             .environment(forecast)
             .environment(NotificationCoordinator.live(app: model, forecast: forecast))
             .environment(
-                AccessController(store: StubStore(active: true), container: .current()))
+                AccessController(store: StubStore(active: true), container: .current())
+            )
+            .environment(RideCalendar(app: model, forecast: forecast))
     }
 #endif

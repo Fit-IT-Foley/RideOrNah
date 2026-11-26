@@ -5,7 +5,11 @@ import VerdictEngine
 extension DisplayFormatter {
     /// The one-line summary for a day's most severe breach: factor, worst value, time range.
     public func summary(_ breach: Breach) -> String {
-        let range = timeRange(breach.range)
+        summary(breach, when: timeRange(breach.range))
+    }
+
+    /// The summary with its time put another way, such as `from 3 PM`.
+    public func summary(_ breach: Breach, when range: String) -> String {
         let worst = breach.worstValue.map { value($0, for: breach.factor) } ?? ""
         switch breach.factor {
         case .precipitationChance: return "Rain likely \(range) (\(worst))"

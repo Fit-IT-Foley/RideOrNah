@@ -75,9 +75,9 @@ Write commit messages like the repository's history: one imperative sentence, no
 
 ## 5. Test
 
-- With `xcodebuild` on PATH (the owner's Mac), run `make audit`, `make test-kit` and `make build`, plus `make test` when UI changed. All must pass before you go on.
+- With `xcodebuild` on PATH (the owner's Mac), run `make audit`, `make lint`, `make test-kit` and `make build`, plus `make test` when UI changed. All must pass before you go on.
 - Without it (a Linux sandbox), you can't build or run the tests here. CI is the test, in step 7.
-- `openspec validate --all --strict` must pass.
+- `make validate-specs` (`openspec validate --all --strict`) must pass. CI runs it too.
 
 ## 6. Archive and open the pull request
 
@@ -105,7 +105,7 @@ Repeat until merged or stuck:
 1. **Conflicts.** Check `gh pr view <n> --json mergeable,mergeStateStatus`. If it conflicts with main, merge `origin/main` into the branch (never rebase or force-push a pushed branch) and resolve the conflicts. Where the conflict is in `openspec/`, keep both sides' requirements and re-run `openspec validate --all --strict`. Push.
 2. **CI.** Wait for checks with `gh pr checks <n> --watch`. They take up to half an hour. If no checks appear within five minutes of a push, CI isn't running, so don't merge.
 3. **Failures.** Read the failing log (`gh run view <run-id> --log-failed`), fix the cause on the branch, push, and go back to 1. Never skip, disable or weaken a check or test to get green.
-4. **Merge.** When every check has passed and the pull request is mergeable, run `gh pr merge <n> --squash`, then `git push origin --delete <branch>`. Leave the branch with `git fetch origin && git switch --detach origin/main` and delete it locally with `git branch -D <branch>`. This works in a worktree even when main is checked out somewhere else, which `--delete-branch` doesn't. The board moves the item to Done.
+4. **Merge.** Run `scripts/merge-when-green.sh --wait <n>`. It's the only way to merge: GitHub Free can't protect main on a private repository, so this script is the gate. It squash-merges only when every expected check in its list has passed on the head commit, and treats a check that is missing, skipped, cancelled or still running as a failure. Never call `gh pr merge` yourself. Exit 1 means a check failed or the pull request can't merge, so go back to 1 or 3. Exit 2 means checks were still running when the wait ran out, so run it again. Once it merges, run `git push origin --delete <branch>`. Leave the branch with `git fetch origin && git switch --detach origin/main` and delete it locally with `git branch -D <branch>`. This works in a worktree even when main is checked out somewhere else, which `--delete-branch` doesn't. The board moves the item to Done.
 
 If CI still fails after three fix attempts in one run, or the merge needs a judgment you can't make, it's stuck. Comment on the pull request with what's failing and what you tried, add the `needs-owner` label (create it if missing), and block the item. Step 1 skips `needs-owner` pull requests, so a stuck one doesn't hold up the board.
 
@@ -115,7 +115,7 @@ If tasks were left unticked, block the item once merged. Main has the work so fa
 
 ## Guardrails
 
-- Never push to main directly, force-push, or merge with checks failing, pending or missing. The merge is safe only because CI passed.
+- Never push to main directly, force-push, or merge other than through `scripts/merge-when-green.sh`. The merge is safe only because CI passed.
 - Never merge a pull request that a human opened or a branch that isn't `next-task/`.
 - Stay inside the item. Unrelated problems you notice go in your report, not in this pull request.
 

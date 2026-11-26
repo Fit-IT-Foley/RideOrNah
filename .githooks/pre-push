@@ -1,0 +1,11 @@
+#!/bin/sh
+# Refuses pushes to main from this machine. main changes only by merging a pull request through
+# scripts/merge-when-green.sh. Enable with: git config core.hooksPath .githooks
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+    if [ "$remote_ref" = refs/heads/main ]; then
+        echo "error: pushing to main is blocked. Open a pull request and merge it with" >&2
+        echo "scripts/merge-when-green.sh <pr-number>." >&2
+        exit 1
+    fi
+done
+exit 0

@@ -16,6 +16,15 @@ SIM_LATEST ?= $$(scripts/find-simulator.sh 'RideOrNah iOS 27' 27)
 DESTINATION ?=
 RESULT_BUNDLE ?= build/UITests.xcresult
 
+# OpenSpec from PATH, or the version this repo's OpenSpec skills were generated with. Its
+# telemetry is turned off for every run.
+OPENSPEC := OPENSPEC_TELEMETRY=0 $(shell command -v openspec >/dev/null 2>&1 \
+	&& echo openspec || echo npx -y @fission-ai/openspec@1.13.2)
+
+# Tracked and new Swift files, so generated and build output is never formatted. The style
+# lives in .swift-format and the formatter is the one that ships with Xcode.
+SWIFT_FILES = $(shell git ls-files --cached --others --exclude-standard '*.swift')
+
 ifeq ($(DESTINATION),)
 TEST_SETUP := simulators
 TEST_DESTINATIONS := -destination "$(SIM_OLDEST)" -destination "$(SIM_LATEST)"
@@ -24,7 +33,7 @@ TEST_SETUP :=
 TEST_DESTINATIONS := -destination "$(DESTINATION)"
 endif
 
-.PHONY: help project simulators build test test-kit audit
+.PHONY: help project simulators build test test-kit audit lint format validate-specs
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
@@ -33,6 +42,9 @@ help:
 	@echo "make test        Run UI tests on the iOS 26 and iOS 27 simulators, or on DESTINATION"
 	@echo "make test-kit    Run RideOrNahKit's Swift tests on this Mac"
 	@echo "make audit       Fail if any remote package dependency is present"
+	@echo "make lint        Fail if any Swift file doesn't match .swift-format"
+	@echo "make format      Rewrite Swift files to match .swift-format"
+	@echo "make validate-specs  Run openspec validate --all --strict"
 
 project:
 	@command -v xcodegen >/dev/null 2>&1 || { \
@@ -57,6 +69,15 @@ test-kit:
 
 audit:
 	@scripts/audit-dependencies.sh
+
+lint:
+	xcrun swift-format lint --strict --parallel $(SWIFT_FILES)
+
+format:
+	xcrun swift-format format --in-place --parallel $(SWIFT_FILES)
+
+validate-specs:
+	$(OPENSPEC) validate --all --strict
 
 # App Store Connect, through the pinned `asc` CLI. Setup and key handling: docs/app-store-connect.md
 # Read-only: asc refuses any request that would change data, and sends no telemetry.

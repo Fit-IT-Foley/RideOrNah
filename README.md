@@ -27,6 +27,10 @@ open RideOrNah.xcodeproj
 | `make test` | Create those simulators if needed, then run the UI tests on both. `DESTINATION=...` runs them on one simulator instead |
 | `make test-kit` | Run the `RideOrNahKit` package tests on this Mac (no simulator needed) |
 | `make audit` | Fail if any remote package dependency has been added |
+| `make lint` | Fail if any Swift file doesn't match the style in `.swift-format` |
+| `make format` | Rewrite Swift files to match `.swift-format` |
+| `make validate-specs` | Run `openspec validate --all --strict` (uses `npx` if `openspec` isn't installed) |
+| `make asc-status`, `make asc-apps`, `make asc-bundle-ids` | Read-only App Store Connect checks through `asc` (see [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
 
 To run the UI tests on one simulator, look it up by device name and iOS version (a major like `26` picks the newest installed 26.x):
 
@@ -38,9 +42,9 @@ Test results, including a screenshot of the launch screen, go to `build/UITests.
 
 ## Continuous integration
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same make targets on GitHub-hosted macOS runners:
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same make targets on GitHub-hosted runners:
 
-- Every push to `main` and every pull request: `make audit`, `make test-kit` and `make build`.
+- Every push to `main` and every pull request: `make audit`, `make lint`, `make test-kit` and `make build` on macOS, and `make validate-specs` on Linux.
 - Every pull request: the UI tests on the newest iOS 26 and iOS 27 simulators. Launch screenshots are uploaded as an artifact kept for 7 days.
 - On demand: the UI tests on any simulator the runners have.
 
@@ -52,6 +56,22 @@ gh run watch
 `ios` takes a major version (`26`) or an exact one (`26.5`). Leave it out to run both defaults. iOS 26 runs on the `macos-26` runner and iOS 27 on `xcode-27`. If the runner doesn't have that device and version, the run fails and lists the iOS simulators it does have.
 
 The repository is private, so CI draws on the account's included Actions minutes (about 190 macOS minutes a month on GitHub Free). That's why pushes skip the UI tests.
+
+### Merging
+
+GitHub Free can't protect branches on a private repository, so nothing on GitHub stops a merge with failing or missing checks. Merge pull requests with the script instead of the Merge button:
+
+```sh
+scripts/merge-when-green.sh --wait <pr-number>
+```
+
+It waits for CI, then squash-merges only if every check in its `EXPECTED_CHECKS` list passed on the pull request's latest commit. A missing, skipped or cancelled check counts as a failure. If you rename a CI job or change the default UI test simulators, update that list.
+
+To stop direct pushes to `main` from your Mac, turn on the repository's git hooks once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
 
 ## Signing and your Apple Developer account
 
@@ -70,4 +90,4 @@ App Store Connect is driven from the command line with an API key, not a browser
 - `RideOrNah/`: the iOS app (SwiftUI). `DesignSystem/AdaptiveSurface.swift` is the one place surfaces get Liquid Glass.
 - `RideOrNahUITests/`: UI tests.
 - `Packages/RideOrNahKit/`: business logic with no UI framework dependencies, tested with Swift Testing.
-- `Config/`: xcconfig files. `scripts/`: helpers used by the Makefile and CI. `.github/workflows/`: CI.
+- `Config/`: xcconfig files. `scripts/`: helpers used by the Makefile and CI, and the merge script. `.githooks/`: optional git hooks. `.github/workflows/`: CI.

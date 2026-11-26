@@ -25,7 +25,7 @@ RideOrNah is a subscription product with no server. Purchases, trials and access
 ## Impact
 
 - New `Entitlements` target in `RideOrNahKit` (access-state logic, testable with StoreKit Testing), paywall screens, and a `.storekit` configuration file for local testing.
-- Privacy: none new. StoreKit is an Apple service and we receive no personal data.
+- Privacy: none new. StoreKit is an Apple service and we receive no personal data. The Terms of Use and Privacy Policy links open in Safari, outside the app, so the app itself never contacts a non-Apple host.
 - WeatherKit requests: none. Lapsed riders make no weather requests, which keeps costs tied to paying riders.
-- Requires the Apple Developer Program, Paid Applications agreement, subscription products in App Store Connect, and hosted Privacy Policy and Terms pages. A free static host such as GitHub Pages keeps the no-backend promise.
+- Requires the Apple Developer Program, Paid Applications agreement, subscription products in App Store Connect, and hosted Privacy Policy and Terms pages. A free static host such as GitHub Pages keeps the no-backend promise. The products can be created and checked with the `asc` CLI (`docs/app-store-connect.md`), and the App Manager key's role covers subscriptions.
 - Open business decisions, none of which change code: prices, final trial length, and whether Family Sharing is on.

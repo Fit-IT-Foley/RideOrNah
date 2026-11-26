@@ -12,6 +12,7 @@ This is the screen riders open every morning. It has to answer "can I ride?" at 
 - Add a 7-day outlook, with lower-confidence days marked, and a day detail with the hour-by-hour conditions behind that day's verdict.
 - Show weather attribution on every screen that shows weather.
 - Remove the DEBUG pipeline screen from `weather-provider`.
+- The verdict is the app's first state shown with color. Add a VoiceOver UI test that reads it in words, link it to `app-platform: Color-independent state`, and delete that scenario's entry from `docs/manual-checks.md`.
 - Non-goals: visual design, which comes from the design session. This change implements content and behavior with system components, then adopts the design when it lands. Calendar actions are added by `calendar-suggestions`.
 
 ## Capabilities

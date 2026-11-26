@@ -13,7 +13,7 @@ Only list a scenario here when neither a Mac nor a simulator can check it: App S
 ## app-platform: Network destinations
 
 - **When:** before each App Store submission.
-- **How:** run a Release build on a real iPhone through every feature while recording traffic with Instruments' Network template, and confirm every host is Apple-operated (WeatherKit, App Store and StoreKit, iCloud).
+- **How:** run a Release build on a real iPhone through every feature while recording traffic with Instruments' Network template, and confirm every host is Apple-operated (WeatherKit, App Store and StoreKit, Apple Maps, iCloud). Legal links must open in Safari, not inside the app.
 - **Why not a test:** it needs a real device, signed services and every feature exercised end to end.
 
 ## app-platform: Privacy label

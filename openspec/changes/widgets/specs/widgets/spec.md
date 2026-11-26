@@ -9,7 +9,7 @@ Puts the rider's verdict on the Home Screen and Lock Screen, using the app's cac
 ### Requirement: Widget families
 The system SHALL provide these widgets:
 - Home Screen small: today's verdict word, a short reason or "All clear", and forecast age.
-- Home Screen medium: the small widget's content plus the verdict for each of the next three days.
+- Home Screen medium: the small widget's content plus the verdict for each of the next three days, with day four (a lower-confidence day) labelled as lower confidence.
 - Lock Screen circular: today's verdict.
 - Lock Screen rectangular: today's verdict and a short reason.
 - Lock Screen inline: today's verdict and a short text.
@@ -33,11 +33,15 @@ Widgets SHALL use forecasts from the shared cache. They SHALL request new foreca
 - **THEN** the widgets show the new verdict without making their own request
 
 ### Requirement: Timeline follows the day
-A widget's content SHALL update when a ride window ends, so ended windows no longer affect today's verdict, and at local midnight. When no windows remain today, the widget SHALL show tomorrow's verdict, labelled as tomorrow.
+A widget's timeline SHALL include entries for when a ride window ends, so ended windows no longer affect today's verdict, and for local midnight. It SHALL also include entries for when the forecast becomes stale (3 hours old) and when it expires (12 hours old), so the widget changes on time even if no refresh happens. When no windows remain today, the widget SHALL show tomorrow's verdict, labelled as tomorrow.
 
 #### Scenario: Evening
 - **WHEN** today's last window ends at 18:00
 - **THEN** after 18:00 the widget shows tomorrow's verdict, labelled "Tomorrow"
+
+#### Scenario: Data ages without a refresh
+- **WHEN** the widget shows Ride from a forecast fetched at 06:00 and no refresh happens all day
+- **THEN** its timeline marks the verdict as older from 09:00, and shows no verdict word from 18:00
 
 ### Requirement: Stale and unknown in widgets
 Widgets SHALL show forecast age when the verdict is stale, and SHALL show a short cause instead of a verdict word when the verdict is Unknown. A widget SHALL NEVER show Ride for Unknown data.
@@ -47,11 +51,11 @@ Widgets SHALL show forecast age when the verdict is stale, and SHALL show a shor
 - **THEN** the widget shows no verdict word and asks the rider to open the app
 
 ### Requirement: Lock Screen privacy
-Widgets SHALL hide location names while the device is locked.
+Any widget content that names a location SHALL be marked privacy-sensitive, so the system hides it while the device is locked.
 
 #### Scenario: Locked device
-- **WHEN** the iPhone is locked and the rectangular widget is visible
-- **THEN** the verdict and reason are shown, and the location name is not
+- **WHEN** a widget that shows a location name is rendered with privacy redaction, as on a locked device
+- **THEN** the verdict and reason are shown, and the location name is hidden
 
 ### Requirement: Locked without access
 When the rider has no subscription access, every widget SHALL show a short prompt to subscribe and no weather information.
@@ -68,8 +72,12 @@ Tapping a widget SHALL open the app on the Today screen. Tapping a day in the me
 - **THEN** the app opens on Thursday's day detail
 
 ### Requirement: Widget attribution
-Widgets SHALL show weather attribution wherever Apple's WeatherKit guidelines require it for widgets. If the guidelines allow attribution in the app alone, the widget SHALL link into the app, where attribution is shown.
+Each widget family that shows a verdict or forecast value SHALL either show the Apple Weather mark, or open an app screen that shows the mark and the attribution link when tapped. Before release, the families SHALL be checked against Apple's current WeatherKit attribution guidelines. That review goes in `docs/manual-checks.md` when this capability is archived.
 
-#### Scenario: Attribution check
-- **WHEN** widgets are reviewed against Apple's current WeatherKit attribution guidelines before release
-- **THEN** each widget family meets them
+#### Scenario: Attribution through the app
+- **WHEN** the rider taps a widget family that doesn't show the Apple Weather mark itself
+- **THEN** the app opens on a screen that shows the mark and the attribution link
+
+#### Scenario: Attribution review
+- **WHEN** a release is prepared
+- **THEN** each widget family has been checked against Apple's current WeatherKit attribution guidelines

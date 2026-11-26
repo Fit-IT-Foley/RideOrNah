@@ -12,7 +12,8 @@ The verdict is the product: everything else (notifications, widgets, calendar, w
 - Use the worst sample across the ride radius for the verdict, and report which compass directions are clear.
 - Explain every verdict: which factor, how bad, when, where, and against which limit.
 - Produce a 7-day outlook with lower-confidence days marked, and find ride opportunities (good stretches of daylight) for calendar suggestions.
-- Refuse to say Ride on missing or out-of-date data.
+- Evaluate any time range in the outlook, so a ride the rider already added to their calendar can be re-checked.
+- Refuse to say Ride on missing or out-of-date data, including a missing core value at the evaluation location, and never suggest opportunities without full data.
 - Non-goals: fetching weather (`weather-provider`), storing limits or providing defaults (`rider-preferences`), and turning results into on-screen text (`today-and-outlook`).
 
 ## Capabilities

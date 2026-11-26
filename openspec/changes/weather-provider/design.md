@@ -50,7 +50,7 @@ The adapter reads WeatherKit values into the engine's SI fields with `Measuremen
 JSON files are stored at `<app group>/Library/Caches/Forecasts/<lat>_<lon>.json`, and each embeds `fetchedAt`.
 - Caches directories aren't backed up, which satisfies the spec's backup exclusion.
 - Storing `fetchedAt` inside the file avoids file-timestamp APIs, so the privacy manifest needs no new required-reason entry.
-- A purge pass deletes files with `fetchedAt` older than 48 h on each store access, throttled to once per hour.
+- A purge pass deletes files with `fetchedAt` older than 48 h on every store access. It reads a handful of small files, so it doesn't need throttling.
 
 ### Request budget in app-group defaults
 `RequestBudget` stores `(localDate, count)` in `UserDefaults(suiteName: appGroup)` and resets when the local date changes. Reservation is read-modify-write. A rare race between the app and the widget can overshoot by a few requests. We accept that over cross-process file locking. The budget is a cost guard, not a security boundary.

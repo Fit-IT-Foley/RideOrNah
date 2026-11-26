@@ -11,18 +11,20 @@ context: |
   Hard constraints (every change must respect these):
   - No backend that we own or pay for. All logic, storage and purchase verification run
     on the device. The only network destinations are Apple services: WeatherKit,
-    StoreKit/App Store, and the rider's own iCloud account.
+    StoreKit/App Store, Apple Maps (place search and map display), and the rider's own
+    iCloud account. Web pages such as the privacy policy open in Safari, outside the app.
   - Collect no user data. No accounts, no analytics, crash-reporting or ad SDKs, no
     third-party code that makes network calls. App Store privacy label target is
-    "Data Not Collected". Location is used only to request weather and never leaves the
-    device except as rounded coordinates sent to WeatherKit.
+    "Data Not Collected". Location is used only to request weather. It leaves the device
+    only as rounded coordinates sent to WeatherKit, as saved places synced through the
+    rider's own iCloud, and as search text sent to Apple Maps when the rider looks up a place.
   - Running costs may only grow with paying users. WeatherKit requests are cached and
     budgeted (see the weather-data capability). Any feature that adds weather requests
     must say how many.
 
   Tech stack: Swift 6 language mode with complete strict concurrency, SwiftUI,
   Observation, Swift Testing (XCTest only for UI tests). Apple frameworks: WeatherKit,
-  CoreLocation, UserNotifications, BackgroundTasks, EventKitUI, StoreKit 2, WidgetKit,
+  CoreLocation, MapKit, UserNotifications, BackgroundTasks, EventKitUI, StoreKit 2, WidgetKit,
   WatchConnectivity, iCloud key-value storage. No third-party runtime packages unless a
   change's design justifies one. XcodeGen generates the Xcode project from project.yml.
   CI: GitHub Actions runs the Makefile targets on GitHub-hosted macOS runners.

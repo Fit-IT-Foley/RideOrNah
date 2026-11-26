@@ -10,7 +10,7 @@ The verdict is only as good as the limits and places behind it. A commuter on a 
 - Give new profiles sensible default limits, and add riding-style presets for ride windows (Commute, Weekends, Anytime).
 - Add a first-run setup that creates the first profile in a few taps, with defaults the rider can accept as they are.
 - Add evaluation locations: current location at approximate accuracy with When-In-Use permission only, plus up to 10 saved locations (Home, Work, custom).
-- Add ride radius presets (Local, 10 mi / 15 km, 25 mi / 40 km, 50 mi / 80 km, 100 mi / 160 km), a default per profile, and a today-only override that resets at midnight.
+- Add ride radius presets (Local, 10 mi / 16 km, 25 mi / 40 km, 50 mi / 80 km, 100 mi / 160 km), each stored as one kilometer value, with a default per profile and a today-only override that resets at midnight.
 - Add a background location source for notifications and widgets: a chosen saved location, or the last location seen while the app was open.
 - Add a unit system that follows the device region, with an imperial or metric override.
 - Sync profiles, saved locations and settings through the rider's own iCloud when available. The last-seen location, forecast cache and request budget never sync.
@@ -23,10 +23,10 @@ The verdict is only as good as the limits and places behind it. A commuter on a 
 - `ride-locations`: current and saved evaluation locations, location permission, ride radius presets and today's override, and the background location source.
 
 ### Modified Capabilities
-- None.
+- `app-platform`: Apple Maps joins the allowed network destinations, because place search and map display go to Apple Maps. Web pages open in Safari rather than inside the app.
 
 ## Impact
 
 - New `RiderSettings` target in `RideOrNahKit` (models, validation, defaults and sync), plus settings and first-run screens in the app.
-- Privacy: adds the When-In-Use location permission, requested at approximate accuracy by default. Saved-location searches go to Apple Maps. Preferences sync through the rider's private iCloud, which we can't access. The last-seen location stays on the device, rounded to 0.01°.
+- Privacy: adds the When-In-Use location permission, requested at approximate accuracy by default. Saved-location searches and the pin map go to Apple Maps, which is why this change adds Apple Maps to `app-platform`'s allowed network destinations. Preferences sync through the rider's private iCloud, which we can't access. The last-seen location stays on the device, rounded to 0.01°.
 - WeatherKit requests: indirect only. The radius chosen here sets the per-refresh request count defined in `weather-data` (1, 9 or 17).

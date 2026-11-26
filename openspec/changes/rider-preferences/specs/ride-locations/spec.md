@@ -7,7 +7,7 @@ Defines where verdicts are evaluated: the rider's current or saved locations, ho
 ## ADDED Requirements
 
 ### Requirement: Location permission
-The system SHALL request only When-In-Use location permission, and SHALL request approximate accuracy by default. It SHALL NEVER request Always permission. Before the system prompt appears, the app SHALL explain that location is used only to fetch weather, is rounded, and never leaves the device except to Apple Weather. If permission is denied, the rider SHALL be able to continue with saved locations only.
+The system SHALL request only When-In-Use location permission, and SHALL request approximate accuracy by default. It SHALL NEVER request Always permission. Before the system prompt appears, the app SHALL explain that location is used only to fetch weather, and is sent only to Apple services, rounded: to Apple Weather for forecasts and, for saved places, to the rider's own iCloud. If permission is denied, the rider SHALL be able to continue with saved locations only.
 
 #### Scenario: Permission denied
 - **WHEN** the rider denies location permission during setup
@@ -15,7 +15,7 @@ The system SHALL request only When-In-Use location permission, and SHALL request
 
 #### Scenario: Approximate location
 - **WHEN** the rider grants approximate location only
-- **THEN** current-location verdicts work normally
+- **THEN** verdicts are evaluated at the reduced-accuracy location, rounded to 0.01°
 
 ### Requirement: Evaluation location choice
 The rider SHALL be able to evaluate either their current location (when permission allows) or any saved location. The choice SHALL persist until the rider changes it. When no location is available (no permission and no saved locations), the system SHALL show no verdict and SHALL ask the rider to add a location.
@@ -40,18 +40,22 @@ The rider SHALL be able to save up to 10 locations, each with a name. A location
 - **THEN** adding another is unavailable until one is deleted
 
 ### Requirement: Ride radius
-The system SHALL offer the radius presets Local, 10 mi (15 km), 25 mi (40 km), 50 mi (80 km) and 100 mi (160 km). Imperial users see the mile values and metric users the kilometer values. Each profile SHALL have a default radius.
+The system SHALL offer the radius presets Local, 10 mi (16 km), 25 mi (40 km), 50 mi (80 km) and 100 mi (160 km). Each preset SHALL be stored as its kilometer value. Metric users see that value, and imperial users see it rounded to the nearest 5 mi, so switching units never changes the radius. Each profile SHALL have a default radius.
 
 #### Scenario: Metric presets
 - **WHEN** units are metric
-- **THEN** the presets read Local, 15 km, 40 km, 80 km and 160 km
+- **THEN** the presets read Local, 16 km, 40 km, 80 km and 160 km
+
+#### Scenario: Switching units keeps the radius
+- **WHEN** the radius is 40 km and the rider switches units to imperial
+- **THEN** the radius reads 25 mi and is still stored as 40 km
 
 ### Requirement: Today-only radius override
 The rider SHALL be able to choose a different radius for today without changing the profile default. The override SHALL apply to every verdict, notification and widget for today, and SHALL reset to the profile default at local midnight.
 
 #### Scenario: Long ride today
-- **WHEN** the rider's default is 25 mi and they set today's radius to 100 mi
-- **THEN** today's verdicts use 100 mi, and tomorrow's use 25 mi again
+- **WHEN** the rider's default is 25 mi (40 km) and they set today's radius to 100 mi (160 km)
+- **THEN** today's verdicts use 100 mi (160 km), and tomorrow's use 25 mi (40 km) again
 
 #### Scenario: Midnight reset
 - **WHEN** the local date changes

@@ -33,13 +33,14 @@ TEST_SETUP :=
 TEST_DESTINATIONS := -destination "$(DESTINATION)"
 endif
 
-.PHONY: help project simulators build test test-kit audit lint format validate-specs spec-coverage
+.PHONY: help project simulators build test test-release test-kit audit lint format validate-specs spec-coverage
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
 	@echo "make simulators  Create the RideOrNah iOS 26 and iOS 27 simulators if missing"
 	@echo "make build       Build the app for the iOS Simulator (CONFIGURATION=$(CONFIGURATION))"
 	@echo "make test        Run UI tests on the iOS 26 and iOS 27 simulators, or on DESTINATION"
+	@echo "make test-release  Check a Release build has no debug-only code, on the same simulators"
 	@echo "make test-kit    Run RideOrNahKit's Swift tests on this Mac"
 	@echo "make audit       Fail if any remote package dependency is present"
 	@echo "make lint        Fail if any Swift file doesn't match .swift-format"
@@ -65,6 +66,14 @@ test: project $(TEST_SETUP)
 	@rm -rf $(RESULT_BUNDLE)
 	xcodebuild test -quiet -project $(PROJECT) -scheme $(SCHEME) \
 		$(TEST_DESTINATIONS) -resultBundlePath $(RESULT_BUNDLE)
+
+# Release builds compile out debug-only code (fixture weather, the pipeline screen); this runs
+# the UI test that checks it against a Release build.
+test-release: project $(TEST_SETUP)
+	@rm -rf build/ReleaseUITests.xcresult
+	xcodebuild test -quiet -project $(PROJECT) -scheme RideOrNahRelease -configuration Release \
+		$(TEST_DESTINATIONS) -only-testing:RideOrNahUITests/ReleaseBuildTests \
+		-resultBundlePath build/ReleaseUITests.xcresult
 
 test-kit:
 	swift test --package-path $(KIT)

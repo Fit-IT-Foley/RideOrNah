@@ -25,6 +25,7 @@ open RideOrNah.xcodeproj
 | `make build` | Build the app for the iOS Simulator (`CONFIGURATION=Release` for a release build) |
 | `make simulators` | Create the `RideOrNah iOS 26` and `RideOrNah iOS 27` simulators if they're missing |
 | `make test` | Create those simulators if needed, then run the app-hosted unit tests and UI tests on both. `DESTINATION=...` runs them on one simulator instead |
+| `make test-release` | Run the Release-build UI check (debug-only code such as fixture weather must be absent) on the same simulators |
 | `make test-kit` | Run the `RideOrNahKit` package tests on this Mac (no simulator needed) |
 | `make audit` | Fail if any remote package dependency has been added |
 | `make lint` | Fail if any Swift file doesn't match the style in `.swift-format` |
@@ -40,6 +41,30 @@ make test DESTINATION="$(scripts/find-simulator.sh 'iPhone 17' 26)"
 ```
 
 Test results, including screenshots of the launch screen and the largest text size, go to `build/UITests.xcresult`.
+
+## Weather
+
+Forecasts come from Apple WeatherKit through `Packages/RideOrNahKit/Sources/WeatherData`, and the verdict rules live in `Sources/VerdictEngine`.
+
+**Fixture weather (debug builds only).** Debug builds can use canned weather instead of WeatherKit: `clearDay`, `afternoonRain`, `stormToTheNorth`, `freezingMorning` and `gusty`. These launch arguments open the debug weather pipeline screen on a fixture and evaluate it straight away, with no network requests:
+
+```sh
+-openWeatherDebug YES -weatherSource fixture -weatherScenario stormToTheNorth
+```
+
+Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments, or pass them to `XCUIApplication().launchArguments` in a UI test. Release builds compile the fixtures and the debug screen out, and `make test-release` checks that.
+
+**WeatherKit setup (needs the Developer Program).** Live forecasts need the WeatherKit capability on the app's App ID (Certificates, Identifiers & Profiles → Identifiers → the app → WeatherKit), and the `com.apple.developer.weatherkit` entitlement, which `project.yml` already sets. A newly enabled capability can take about 30 minutes to start working. Until then, requests fail as "not authorized", and the app reports that rather than guessing.
+
+**Request budget.** Each refresh requests one point for a local radius, 9 points below 80 km (49.7 mi), and 17 from 80 km up. Cached forecasts are reused for 60 minutes in the foreground, 2 hours in the background and in widgets, and 15 minutes after a pull to refresh. Each device makes at most 150 requests a day.
+
+| Radius | Requests per refresh | Requests per rider per month (about 3 refreshes a day) |
+|---|---|---|
+| Local | 1 | ~90 |
+| 10–25 mi (16–40 km) | 9 | ~800 |
+| 50–100 mi (80–160 km) | 17 | ~1,500 |
+
+At the default 25 mi radius, Apple's free 500,000 calls a month cover about 600 active riders. Above that, paid tiers cost about $50 per million calls.
 
 ## Linking tests to specs
 

@@ -119,6 +119,10 @@ jobs:
           # dark-mode UI test skips on it.
           TEST_RUNNER_CI: "true"
         run: make test DESTINATION="$DESTINATION"
+      - name: Check the Release build
+        env:
+          DESTINATION: ${{ steps.simulator.outputs.destination }}
+        run: make test-release DESTINATION="$DESTINATION"
       - name: Export screenshots
         if: always()
         run: |

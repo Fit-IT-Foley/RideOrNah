@@ -20,7 +20,7 @@
 ### A `WeatherProviding` protocol with two implementations
 `WeatherProviding.forecast(at: RoundedCoordinate, hours: DateInterval, days: DateInterval) async throws -> PointForecast`, where `PointForecast` holds `[HourConditions]`, `[DaySun]` and `[AlertInfo]?` (nil means alerts are unavailable).
 - `WeatherKitProvider` makes one `WeatherService.shared.weather(for:including: .hourly(startDate:endDate:), .daily(startDate:endDate:), .alerts)` call per point.
-- `FixtureProvider` loads bundled JSON scenarios. It's compiled only under `#if DEBUG` and is also used by tests and SwiftUI previews.
+- `FixtureProvider` builds its scenarios in code (no bundled resources), using the evaluation location to tell which points are to the north. It's compiled only under `#if DEBUG` and is also used by tests and SwiftUI previews.
 - **Why:** the store, cache and budget logic are tested against the fixture source with a fake clock. Only the thin WeatherKit mapping needs a live check.
 
 ### A thin WeatherKit adapter, with mapping as pure functions

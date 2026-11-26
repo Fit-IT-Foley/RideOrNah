@@ -9,11 +9,14 @@ let package = Package(
     products: [
         .library(name: "SharedContainer", targets: ["SharedContainer"]),
         .library(name: "VerdictEngine", targets: ["VerdictEngine"]),
+        .library(name: "WeatherData", targets: ["WeatherData"]),
     ],
     targets: [
         .target(name: "SharedContainer"),
         .testTarget(name: "SharedContainerTests", dependencies: ["SharedContainer"]),
-        .target(name: "VerdictEngine"),
+        .target(name: "VerdictEngine", exclude: ["README.md"]),
         .testTarget(name: "VerdictEngineTests", dependencies: ["VerdictEngine"]),
+        .target(name: "WeatherData", dependencies: ["VerdictEngine", "SharedContainer"]),
+        .testTarget(name: "WeatherDataTests", dependencies: ["WeatherData"]),
     ]
 )

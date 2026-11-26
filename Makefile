@@ -33,7 +33,7 @@ TEST_SETUP :=
 TEST_DESTINATIONS := -destination "$(DESTINATION)"
 endif
 
-.PHONY: help project simulators build test test-kit audit lint format validate-specs
+.PHONY: help project simulators build test test-kit audit lint format validate-specs spec-coverage
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
@@ -45,6 +45,8 @@ help:
 	@echo "make lint        Fail if any Swift file doesn't match .swift-format"
 	@echo "make format      Rewrite Swift files to match .swift-format"
 	@echo "make validate-specs  Run openspec validate --all --strict"
+	@echo "make spec-coverage   Fail if a spec scenario has no linked test or manual check"
+	@echo "                     (CHANGE=<name> also requires that change's scenarios)"
 
 project:
 	@command -v xcodegen >/dev/null 2>&1 || { \
@@ -78,6 +80,11 @@ format:
 
 validate-specs:
 	$(OPENSPEC) validate --all --strict
+
+# Links are `// Scenario: <capability>: <scenario name>` comments above tests; scenarios no test
+# can reach are listed in docs/manual-checks.md. Run with CHANGE=<name> before archiving it.
+spec-coverage:
+	@scripts/check-spec-coverage.sh $(if $(CHANGE),--change $(CHANGE))
 
 # App Store Connect, through the pinned `asc` CLI. Setup and key handling: docs/app-store-connect.md
 # Read-only: asc refuses any request that would change data, and sends no telemetry.

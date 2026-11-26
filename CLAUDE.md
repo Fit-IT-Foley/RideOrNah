@@ -9,6 +9,7 @@ iOS app (plus widgets and an Apple Watch app) that tells motorcycle riders Ride,
 - Workflow: `/opsx:propose` to plan a change, `/opsx:apply` to implement its tasks, `/opsx:archive` to merge its specs into `openspec/specs/` once it ships.
 - Don't write app code that no change's tasks cover. If something new comes up, update the change (`/opsx:update`) or propose a new one.
 - `openspec validate --all --strict` must pass before committing spec edits.
+- Every spec scenario is proven by a test that links to it with a `// Scenario: <capability>: <scenario name>` comment directly above the test, or is listed in `docs/manual-checks.md` when no Mac or simulator can check it. `make spec-coverage` enforces this in CI. Run `make spec-coverage CHANGE=<name>` before archiving a change.
 
 ## v1 change order
 

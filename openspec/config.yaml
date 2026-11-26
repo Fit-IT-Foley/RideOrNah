@@ -66,9 +66,23 @@ rules:
     - Never specify layout, color, typography or animation. The design session owns those.
     - Any requirement that consumes weather data must say what happens when that data is missing or stale.
     - Write limits and distances with both imperial and metric values.
+    - Keep scenario names unique within a capability. Tests link to scenarios by exact name, so renaming a scenario means updating the tests that link to it.
   design:
     - Keep business logic in the RideOrNahKit Swift package, free of UIKit and SwiftUI, so it can be tested with `swift test` on macOS.
     - Give the WeatherKit request count for any decision that adds weather requests.
   tasks:
     - Logic tasks verify with Swift Testing in the RideOrNahKit package; UI tasks verify with a SwiftUI preview, a UI test, or a named simulator check.
     - Anything that needs the Apple Developer Program (WeatherKit entitlement, StoreKit sandbox, App Groups on device) must be marked "(needs Developer Program)".
+    - "A task that implements scenarios names them, and its verification is a test that links to each one with a `// Scenario: <capability>: <scenario name>` comment."
+    - "End the task list with `make spec-coverage CHANGE=<change>` passing, so every scenario in the change is linked before it's archived."
+
+# Guidance for implementing and archiving changes
+operations:
+  apply:
+    guidance:
+      - "Link every test that proves a scenario with a comment on its own line directly above the test: `// Scenario: <capability>: <scenario name>`, the name exactly as the spec writes it, one line per scenario."
+      - "A scenario that neither a Mac nor a simulator can check (App Store behavior, real devices, things a UI test can't observe) goes in docs/manual-checks.md with When, How and Why-not-a-test bullets instead. Don't use it to skip a test that's merely hard."
+      - "Before ticking the last task, run `make spec-coverage CHANGE=<change>`. It must pass."
+  archive:
+    guidance:
+      - "Run `make spec-coverage CHANGE=<change>` before archiving and `make spec-coverage` after. Both must pass, because archiving makes the change's scenarios required on main."

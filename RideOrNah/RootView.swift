@@ -12,6 +12,7 @@ struct RootView: View {
                 Text("Your daily ride check is on its way.")
                     .font(.body)
                     .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("root.subtitle")
             }
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)

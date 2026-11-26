@@ -48,7 +48,8 @@ jobs:
       - run: make test-kit
       - run: make build
 
-  # Needs no Mac, so it runs on Linux and costs no macOS minutes.
+  # Needs no Mac, so it runs on Linux and costs no macOS minutes. Checks the specs are valid and
+  # that every scenario links to a test or a manual check.
   specs:
     name: Spec validation
     if: github.event_name != 'workflow_dispatch'
@@ -57,6 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make validate-specs
+      - run: make spec-coverage
 
   plan:
     if: github.event_name != 'push'

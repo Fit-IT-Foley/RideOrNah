@@ -24,12 +24,13 @@ open RideOrNah.xcodeproj
 | `make project` | Generate the Xcode project from `project.yml` |
 | `make build` | Build the app for the iOS Simulator (`CONFIGURATION=Release` for a release build) |
 | `make simulators` | Create the `RideOrNah iOS 26` and `RideOrNah iOS 27` simulators if they're missing |
-| `make test` | Create those simulators if needed, then run the UI tests on both. `DESTINATION=...` runs them on one simulator instead |
+| `make test` | Create those simulators if needed, then run the app-hosted unit tests and UI tests on both. `DESTINATION=...` runs them on one simulator instead |
 | `make test-kit` | Run the `RideOrNahKit` package tests on this Mac (no simulator needed) |
 | `make audit` | Fail if any remote package dependency has been added |
 | `make lint` | Fail if any Swift file doesn't match the style in `.swift-format` |
 | `make format` | Rewrite Swift files to match `.swift-format` |
 | `make validate-specs` | Run `openspec validate --all --strict` (uses `npx` if `openspec` isn't installed) |
+| `make spec-coverage` | Fail if a spec scenario has no linked test or manual check. `CHANGE=<name>` also requires that change's scenarios |
 | `make asc-status`, `make asc-apps`, `make asc-bundle-ids` | Read-only App Store Connect checks through `asc` (see [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
 
 To run the UI tests on one simulator, look it up by device name and iOS version (a major like `26` picks the newest installed 26.x):
@@ -38,14 +39,28 @@ To run the UI tests on one simulator, look it up by device name and iOS version 
 make test DESTINATION="$(scripts/find-simulator.sh 'iPhone 17' 26)"
 ```
 
-Test results, including a screenshot of the launch screen, go to `build/UITests.xcresult`.
+Test results, including screenshots of the launch screen and the largest text size, go to `build/UITests.xcresult`.
+
+## Linking tests to specs
+
+Every scenario in `openspec/specs/` must be proven by a test. A test says which scenarios it proves with a comment on its own line directly above it, naming the capability and the scenario exactly as the spec writes it:
+
+```swift
+// Scenario: app-platform: Install on the oldest supported OS
+@MainActor
+func testLaunchShowsPlaceholderTitle() {
+```
+
+A scenario that neither a Mac nor a simulator can check, such as App Store behavior or a real device's network traffic, goes in [`docs/manual-checks.md`](docs/manual-checks.md) instead, with how and when to check it.
+
+`make spec-coverage` fails when a scenario has neither, or when a test or manual check names a scenario that doesn't exist (for example after a rename). Tests can link to scenarios in active changes before they're archived. Run `make spec-coverage CHANGE=<name>` before archiving a change, to require its scenarios too.
 
 ## Continuous integration
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same make targets on GitHub-hosted runners:
 
-- Every push to `main` and every pull request: `make audit`, `make lint`, `make test-kit` and `make build` on macOS, and `make validate-specs` on Linux.
-- Every pull request: the UI tests on the newest iOS 26 and iOS 27 simulators. Launch screenshots are uploaded as an artifact kept for 7 days.
+- Every push to `main` and every pull request: `make audit`, `make lint`, `make test-kit` and `make build` on macOS, and `make validate-specs` and `make spec-coverage` on Linux.
+- Every pull request: the app-hosted unit tests and UI tests on the newest iOS 26 and iOS 27 simulators. Test screenshots are uploaded as an artifact kept for 7 days.
 - On demand: the UI tests on any simulator the runners have.
 
 ```sh

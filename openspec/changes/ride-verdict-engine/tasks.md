@@ -33,4 +33,4 @@
 ## 5. Integration checks and docs
 
 - [ ] 5.1 Add seeded property tests: loosening any limit never makes a verdict more severe, adding a sample point never makes it less severe, and evaluating the same input twice gives identical results. Verify they pass over at least 500 generated inputs.
-- [ ] 5.2 Write `Packages/RideOrNahKit/Sources/VerdictEngine/README.md` describing the inputs, outputs, units and freshness rules, and map each spec requirement to its test file. Verify every requirement in `specs/ride-verdict/spec.md` appears in the map.
+- [ ] 5.2 Write `Packages/RideOrNahKit/Sources/VerdictEngine/README.md` describing the inputs, outputs, units and freshness rules. Verify `make spec-coverage CHANGE=ride-verdict-engine` passes, so every ride-verdict scenario is linked to a test.

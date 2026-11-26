@@ -46,7 +46,7 @@ Take the first Todo item in board order. If it's a draft rather than an issue, c
 gh api graphql -f query='mutation($item:ID!,$repo:ID!){convertProjectV2DraftIssueItemToIssue(input:{itemId:$item,repositoryId:$repo}){item{content{... on Issue{number url}}}}}' -f item=<item-id> -f repo=R_kgDOV8JX4w
 ```
 
-Read the issue's body and comments in full. They're the requirements. Then move the item to In Progress and branch from an up-to-date main as `next-task/<issue-number>-<short-slug>`.
+Read the issue's body and comments in full. They're the requirements. Then move the item to In Progress, run `git fetch origin`, and branch from `origin/main` as `next-task/<issue-number>-<short-slug>`.
 
 If Todo is empty, report that and stop. If an item turns out blocked, try the next Todo item, up to three in one run.
 
@@ -105,7 +105,7 @@ Repeat until merged or stuck:
 1. **Conflicts.** Check `gh pr view <n> --json mergeable,mergeStateStatus`. If it conflicts with main, merge `origin/main` into the branch (never rebase or force-push a pushed branch) and resolve the conflicts. Where the conflict is in `openspec/`, keep both sides' requirements and re-run `openspec validate --all --strict`. Push.
 2. **CI.** Wait for checks with `gh pr checks <n> --watch`. They take up to half an hour. If no checks appear within five minutes of a push, CI isn't running, so don't merge.
 3. **Failures.** Read the failing log (`gh run view <run-id> --log-failed`), fix the cause on the branch, push, and go back to 1. Never skip, disable or weaken a check or test to get green.
-4. **Merge.** When every check has passed and the pull request is mergeable: `gh pr merge <n> --squash --delete-branch`. The board moves the item to Done.
+4. **Merge.** When every check has passed and the pull request is mergeable, run `gh pr merge <n> --squash`, then `git push origin --delete <branch>`. Leave the branch with `git fetch origin && git switch --detach origin/main` and delete it locally with `git branch -D <branch>`. This works in a worktree even when main is checked out somewhere else, which `--delete-branch` doesn't. The board moves the item to Done.
 
 If CI still fails after three fix attempts in one run, or the merge needs a judgment you can't make, it's stuck. Comment on the pull request with what's failing and what you tried, add the `needs-owner` label (create it if missing), and block the item. Step 1 skips `needs-owner` pull requests, so a stuck one doesn't hold up the board.
 

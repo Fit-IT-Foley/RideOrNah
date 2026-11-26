@@ -27,3 +27,18 @@ Only list a scenario here when neither a Mac nor a simulator can check it: App S
 - **When:** before each App Store submission.
 - **How:** read Apple's current WeatherKit attribution guidelines (developer.apple.com/weatherkit/get-started). For each widget family (small, medium, circular, rectangular, inline), confirm either that it shows the Apple Weather mark, or that tapping it opens a screen that shows the mark and the "Weather data sources" link. Today and Day detail show both, and `WidgetLinkTests` checks the tap. Record the date and guideline version in the release notes.
 - **Why not a test:** the guidelines are Apple's document and change over time. A person has to read them against the widgets.
+
+# Other release checks
+
+Checks that back a requirement without being a scenario of their own. `make spec-coverage` doesn't read these.
+
+### Watch delivery between paired devices
+
+- **When:** before each App Store submission, and after changing `WatchSender` or `WatchReceiver`.
+- **How:** with a real iPhone and a paired Apple Watch running the release candidate:
+  1. Open the iPhone app and wait for the forecast.
+  2. Open the watch app, and confirm it shows the same verdict, windows and reasons as Today.
+  3. Add the rectangular complication and confirm it matches.
+  4. Lock the watch or lower the wrist, and confirm the place name hides.
+  5. Leave the iPhone's background refresh to run overnight, and confirm the watch shows the morning's results.
+- **Why not a test:** WatchConnectivity doesn't deliver application contexts between simulators reliably, so tests cover the sender (`WatchSenderTests`) and the receiver (`WatchStoreTests`) separately.

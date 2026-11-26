@@ -51,12 +51,12 @@ Each `WatchDay` carries:
 
 ### Tooling
 - **Builds:** the watchOS 27 SDK ships with Xcode, so the watch targets build and `make build` covers them.
-- **Watch-side tests:** running them needs a watchOS 26+ simulator runtime, which isn't installed. Until it is, the watch screens are checked by rendering their views in app-hosted iPhone tests. A watch simulator destination, in `make test` and the CI matrix, follows once the runtime is available.
+- **Watch-side tests:** `RideOrNahWatchUITests` runs the watch app on a watch simulator. A debug-only `-watchSample` launch argument hands the store sample results, as if the iPhone sent them, and `-fixedNow` stops the clock. `make test` runs it on watchOS 27 after the iPhone tests, and CI runs it on watchOS 26, the oldest supported. App-hosted iPhone tests still render the watch views, and `-watchPreview` still shows the watch screen on the iPhone.
 
 ## Risks / Trade-offs
 
 - [WatchConnectivity delivery can't be tested in a simulator pair reliably] → The sender and receiver are tested on each side. Real delivery between paired devices goes in `docs/manual-checks.md`.
-- [Watch screens checked on iOS] → The views use cross-platform SwiftUI. A watch simulator run is added when the runtime is installed.
+- [Watch tests cost CI time] → One watch job per pull request, on watchOS 26 only. Local `make test` covers watchOS 27.
 
 ## Open Questions
 

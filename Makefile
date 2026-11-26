@@ -6,14 +6,19 @@ SCHEME := RideOrNah
 KIT := Packages/RideOrNahKit
 CONFIGURATION ?= Debug
 
-# `make test` runs the UI tests on the oldest supported iOS and the newest. Override with
-# SIM_OLDEST=... SIM_LATEST=... if needed, or set DESTINATION to run on one simulator only:
+# `make test` runs the UI tests on the oldest supported iOS and the newest, then the watch app's
+# UI tests on the newest watchOS. Override with SIM_OLDEST=... SIM_LATEST=... WATCH_SIM=... if
+# needed, or set DESTINATION to run the iPhone tests on one simulator only:
 #   make test DESTINATION="$(scripts/find-simulator.sh 'iPhone 17' 26)"
+# and WATCH_DESTINATION to run the watch tests on another watch:
+#   make test-watch WATCH_DESTINATION="$(scripts/find-simulator.sh 'Apple Watch Series 11 (46mm)' 26 watchOS)"
 # The defaults are looked up by ID when the tests run: a destination given only by name means
 # the latest OS to xcodebuild, so it would skip the iOS 26 simulator.
 SIM_OLDEST ?= $$(scripts/find-simulator.sh 'RideOrNah iOS 26' 26)
 SIM_LATEST ?= $$(scripts/find-simulator.sh 'RideOrNah iOS 27' 27)
+WATCH_SIM ?= $$(scripts/find-simulator.sh 'RideOrNah watchOS 27' 27 watchOS)
 DESTINATION ?=
+WATCH_DESTINATION ?=
 RESULT_BUNDLE ?= build/UITests.xcresult
 
 # OpenSpec from PATH, or the version this repo's OpenSpec skills were generated with. Its
@@ -25,21 +30,36 @@ OPENSPEC := OPENSPEC_TELEMETRY=0 $(shell command -v openspec >/dev/null 2>&1 \
 # lives in .swift-format and the formatter is the one that ships with Xcode.
 SWIFT_FILES = $(shell git ls-files --cached --others --exclude-standard '*.swift')
 
+# With DESTINATION set, `make test` runs the iPhone tests there and skips the watch.
 ifeq ($(DESTINATION),)
 TEST_SETUP := simulators
 TEST_DESTINATIONS := -destination "$(SIM_OLDEST)" -destination "$(SIM_LATEST)"
+TEST_WATCH := test-watch
 else
 TEST_SETUP :=
 TEST_DESTINATIONS := -destination "$(DESTINATION)"
+TEST_WATCH :=
 endif
 
-.PHONY: help project simulators build test test-release test-kit audit lint format validate-specs spec-coverage
+ifeq ($(WATCH_DESTINATION),)
+WATCH_SETUP := simulators
+WATCH_TEST_DESTINATION := $(WATCH_SIM)
+else
+WATCH_SETUP :=
+WATCH_TEST_DESTINATION := $(WATCH_DESTINATION)
+endif
+
+.PHONY: help project simulators build test test-ios test-watch test-release test-kit audit lint format \
+	validate-specs spec-coverage
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
-	@echo "make simulators  Create the RideOrNah iOS 26 and iOS 27 simulators if missing"
+	@echo "make simulators  Create the RideOrNah iOS 26, iOS 27 and watchOS 27 simulators if missing"
 	@echo "make build       Build the app for the iOS Simulator (CONFIGURATION=$(CONFIGURATION))"
-	@echo "make test        Run UI tests on the iOS 26 and iOS 27 simulators, or on DESTINATION"
+	@echo "make test        Run UI tests on the iOS 26 and iOS 27 simulators, then the watch's"
+	@echo "                 (DESTINATION=... runs the iPhone tests there only)"
+	@echo "make test-ios    Run only the iPhone tests"
+	@echo "make test-watch  Run only the watch app's UI tests, on watchOS 27 or WATCH_DESTINATION"
 	@echo "make test-release  Check a Release build has no debug-only code, on the same simulators"
 	@echo "make test-kit    Run RideOrNahKit's Swift tests on this Mac"
 	@echo "make audit       Fail if any remote package dependency is present"
@@ -62,10 +82,17 @@ build: project
 	xcodebuild build -quiet -project $(PROJECT) -scheme $(SCHEME) \
 		-configuration $(CONFIGURATION) -destination 'generic/platform=iOS Simulator'
 
-test: project $(TEST_SETUP)
+test: test-ios $(TEST_WATCH)
+
+test-ios: project $(TEST_SETUP)
 	@rm -rf $(RESULT_BUNDLE)
 	xcodebuild test -quiet -project $(PROJECT) -scheme $(SCHEME) \
 		$(TEST_DESTINATIONS) -resultBundlePath $(RESULT_BUNDLE)
+
+test-watch: project $(WATCH_SETUP)
+	@rm -rf build/WatchUITests.xcresult
+	xcodebuild test -quiet -project $(PROJECT) -scheme RideOrNahWatch \
+		-destination "$(WATCH_TEST_DESTINATION)" -resultBundlePath build/WatchUITests.xcresult
 
 # Release builds compile out debug-only code (fixture weather, the pipeline screen); this runs
 # the UI test that checks it against a Release build.

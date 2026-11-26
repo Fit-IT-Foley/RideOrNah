@@ -7,17 +7,23 @@ import WatchConnectivity
 struct RideOrNahWatchApp: App {
     @State private var store: WatchStore
     private let receiver: WatchReceiver
+    private let fixedNow: Date?
 
     init() {
         let group = Bundle.main.object(forInfoDictionaryKey: "RideOrNahAppGroup") as? String
         let store = WatchStore(defaults: group.flatMap(UserDefaults.init(suiteName:)) ?? .standard)
+        #if DEBUG
+            fixedNow = WatchSample.apply(to: store)
+        #else
+            fixedNow = nil
+        #endif
         receiver = WatchReceiver(store: store)
         _store = State(initialValue: store)
     }
 
     var body: some Scene {
         WindowGroup {
-            WatchRootView().environment(store)
+            WatchRootView(fixedNow: fixedNow).environment(store)
         }
     }
 }
@@ -25,12 +31,14 @@ struct RideOrNahWatchApp: App {
 /// Follows the clock, so ended windows and midnight change the screen without new results.
 struct WatchRootView: View {
     @Environment(WatchStore.self) private var store
+    /// Debug builds can stop the clock with `-fixedNow`.
+    var fixedNow: Date?
 
     var body: some View {
         TimelineView(.everyMinute) { context in
             WatchMainView(
                 content: WatchPresenter(formatter: DisplayFormatter(units: .imperial, calendar: .current))
-                    .content(store.results, now: context.date),
+                    .content(store.results, now: fixedNow ?? context.date),
                 markURL: store.results?.attributionMarkURL, legalURL: store.results?.attributionLegalURL)
         }
     }

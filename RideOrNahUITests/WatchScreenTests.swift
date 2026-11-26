@@ -1,7 +1,7 @@
 import XCTest
 
-/// The watch app's screen, shown on the iPhone with `-watchPreview` until a watchOS simulator
-/// runtime is installed.
+/// The watch app's screen, shown on the iPhone with `-watchPreview` from this iPhone's own
+/// results. `WatchAppTests` checks the same screen on a watch simulator.
 final class WatchScreenTests: XCTestCase {
     // Scenario: watch-app: Main screen attribution
     @MainActor

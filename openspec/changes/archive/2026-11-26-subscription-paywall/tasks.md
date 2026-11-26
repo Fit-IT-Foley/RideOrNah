@@ -11,7 +11,7 @@ Every test that proves a scenario links to it with `// Scenario: subscription: <
 ## 2. App
 
 - [x] 2.1 Add `StoreKit/RideOrNah.storekit` with the monthly and annual plans in one group, each with a 1-week free trial, set it on the Run scheme in `project.yml`, and bundle it with the app-hosted tests.
-- [x] 2.2 Implement `AccessController`: products, status, `Transaction.updates`, purchase, restore, and the `-accessStub` debug override. Verify app-hosted `SKTestSession` tests linked to "Purchase on another device", "Refund" and "Restore on a new phone" pass.
+- [x] 2.2 Implement `AccessController`: products, status, `Transaction.updates`, purchase, restore, and the `-accessStub` debug override. Verify app-hosted tests linked to "Purchase on another device", "Refund" and "Restore on a new phone" pass with the stand-in store, and that the `SKTestSession` suite passes against `LiveStore` where StoreKit Testing works.
 - [x] 2.3 Gate weather and notifications on access: no refresh, pending ride notifications removed while locked, and a refresh and rebuild when access returns. Verify app-hosted tests linked to "Editing without access", "Trial ends without purchase" and "Resubscribing" pass.
 - [x] 2.4 Build the paywall, the locked Today and Week states, and the Subscription section in Settings, in the design-system style, with Terms and Privacy opening in Safari. Pass `-accessStub active` in the existing UI tests. Verify UI tests linked to "After setup" and "Dismissed paywall" pass.
 - [x] 2.5 Write `docs/privacy-policy.md`, and add the before-submission sandbox purchase check on a device to `docs/app-store-connect.md`. Running that check needs the Developer Program.

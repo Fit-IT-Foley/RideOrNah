@@ -2,137 +2,117 @@ import Entitlements
 import Foundation
 import Presentation
 import SharedContainer
-import StoreKitTest
 import Testing
 import VerdictEngine
 
 @testable import RideOrNah
 
-/// StoreKit Testing works in the iOS 27 simulator and later.
-let storeKitTestingWorks = ProcessInfo.processInfo.isOperatingSystemAtLeast(
-    OperatingSystemVersion(majorVersion: 27, minorVersion: 0, patchVersion: 0))
-
-/// StoreKit Testing against `StoreKit/RideOrNah.storekit`: purchases outside the app, refunds,
-/// expiry and restore, with no sandbox account. Serialized, since the test session is shared.
-/// On the iOS 26 simulator StoreKit Testing loads no products and refuses purchases
-/// (`.notEntitled`), so these run on iOS 27 and later; CI runs both.
+/// Access as StoreKit's updates change it, with a stand-in store, so these run on every
+/// simulator and in CI. `StoreKitIntegrationTests` drive the real store where StoreKit Testing works.
 @MainActor
-@Suite(
-    .serialized,
-    .enabled(if: storeKitTestingWorks, "StoreKit Testing needs iOS 27 in the simulator"))
 struct AccessControllerTests {
-
-    static func session() throws -> SKTestSession {
-        let session = try SKTestSession(configurationFileNamed: "RideOrNah")
-        session.resetToDefaultState()
-        session.clearTransactions()
-        session.disableDialogs = true
-        return session
-    }
-
-    /// A controller writing its access mirror somewhere only this test reads.
-    static func controller() throws -> (AccessController, SharedContainer) {
+    /// A controller on a stand-in store, writing its access mirror somewhere only this test reads.
+    static func controller(active: Bool = false) throws -> (AccessController, StubStore, SharedContainer) {
         let url = FileManager.default.temporaryDirectory.appending(path: "Access-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         let container = SharedContainer.resolve(groupIdentifier: "test") { _ in url }
-        return (AccessController(container: container), container)
+        let store = StubStore(active: active)
+        return (AccessController(store: store, container: container), store, container)
     }
 
-    /// Waits for StoreKit to deliver an update.
+    /// Waits for an update to be handled.
     static func eventually(_ condition: () -> Bool) async -> Bool {
-        for _ in 0..<100 where !condition() { try? await Task.sleep(for: .milliseconds(100)) }
+        for _ in 0..<100 where !condition() { try? await Task.sleep(for: .milliseconds(20)) }
         return condition()
-    }
-
-    // Trial eligibility isn't checked here: StoreKit Testing reports riders as ineligible even
-    // when the purchase gets the trial. PaywallTests cover both wordings.
-    @Test("Plans load from the App Store")
-    func plansLoad() async throws {
-        _ = try Self.session()
-        let (store, _) = try Self.controller()
-        await store.start()
-        #expect(store.access == .inactive)
-        #expect(Set(store.offers.map(\.plan)) == [.monthly, .annual])
-        #expect(store.offers.first { $0.plan == .annual }?.displayPrice == "$29.99")
-        #expect(store.offers.first { $0.plan == .monthly }?.displayPrice == "$4.99")
     }
 
     // Scenario: subscription: Purchase on another device
     @Test("Purchase on another device")
     func purchaseOnAnotherDevice() async throws {
-        let session = try Self.session()
-        let (store, container) = try Self.controller()
-        await store.start()
-        #expect(store.access == .inactive)
-        _ = try await session.buyProduct(identifier: Plan.annual.productID)
-        #expect(await Self.eventually { store.access.isActive })
-        #expect(store.access == .active(plan: .annual, inTrial: true, renews: true))
+        let (access, store, container) = try Self.controller()
+        await access.start()
+        #expect(access.access == .inactive)
+        store.current = [StubStore.trial(.annual)]
+        store.emit()
+        #expect(await Self.eventually { access.access.isActive })
+        #expect(access.access == .active(plan: .annual, inTrial: true, renews: true))
         #expect(container.readAccessMirror()?.isActive == true)
     }
 
     // Scenario: subscription: Refund
     @Test("Refund")
     func refund() async throws {
-        let session = try Self.session()
-        let (store, container) = try Self.controller()
-        let transaction = try await session.buyProduct(identifier: Plan.monthly.productID)
-        await store.start()
-        #expect(store.access.isActive)
-        try session.refundTransaction(identifier: UInt(transaction.id))
-        #expect(await Self.eventually { !store.access.isActive })
+        let (access, store, container) = try Self.controller(active: true)
+        await access.start()
+        #expect(access.access.isActive)
+        store.current = [SubscriptionFact(plan: .annual, state: .revoked, isVerified: true)]
+        store.emit()
+        #expect(await Self.eventually { !access.access.isActive })
         #expect(container.readAccessMirror()?.isActive == false)
     }
 
     // Scenario: subscription: Restore on a new phone
     @Test("Restore on a new phone")
     func restoreOnANewPhone() async throws {
-        let session = try Self.session()
-        _ = try await session.buyProduct(identifier: Plan.annual.productID)
-        let (store, _) = try Self.controller()
-        // The real sync can ask the rider to sign in; StoreKit Testing already has the purchase.
-        store.sync = {}
-        #expect(store.access == .inactive)
-        await store.restore()
-        #expect(store.access.isActive)
-        #expect(store.message == nil)
+        let (access, store, _) = try Self.controller()
+        await access.start()
+        #expect(access.access == .inactive)
+        // The App Store returns the account's subscription when asked.
+        store.current = [SubscriptionFact(plan: .monthly, state: .subscribed, isVerified: true)]
+        await access.restore()
+        #expect(store.syncCount == 1)
+        #expect(access.access == .active(plan: .monthly, inTrial: false, renews: true))
+        #expect(access.message == nil)
     }
 
-    // The rider cancels during the trial and it runs out; StoreKit's fast clock makes each
-    // period last 2 seconds.
+    @Test("Restore with nothing to restore")
+    func restoreWithNothing() async throws {
+        let (access, _, _) = try Self.controller()
+        await access.restore()
+        #expect(access.access == .inactive)
+        #expect(access.message == "No active subscription was found for this Apple Account.")
+    }
+
     // Scenario: subscription: Trial ends without purchase
     // Scenario: subscription: Resubscribing
     @Test("Trial ends, then resubscribing")
     func trialEndsThenResubscribing() async throws {
-        let session = try Self.session()
-        session.timeRate = .oneRenewalEveryTwoSeconds
         let clock = MovableClock(NotificationCoordinatorTests.june(8, 5))
         let (coordinator, center, model) = NotificationCoordinatorTests.coordinator(clock: clock)
-        let (store, container) = try Self.controller()
-        store.connect(forecast: coordinator.forecast, notifications: coordinator)
-        let trial = try await session.buyProduct(identifier: Plan.annual.productID)
-        try session.disableAutoRenewForTransaction(identifier: UInt(trial.id))
-        await store.start()
+        let (access, store, container) = try Self.controller(active: true)
+        access.connect(forecast: coordinator.forecast, notifications: coordinator)
+        await access.start()
         #expect(await coordinator.enable(at: 6 * 60 + 30))
+        #expect(center.pending.count == 3)
         let settings = model.preferences?.notifications
 
-        // The app re-checks on every foreground and background refresh.
-        for _ in 0..<50 where store.access.isActive {
-            try? await Task.sleep(for: .milliseconds(200))
-            await store.refresh()
-        }
-        #expect(store.access == .inactive)
+        // The trial runs out; the app finds out on its next check.
+        store.current = [SubscriptionFact(plan: .annual, state: .expired, isVerified: true, isTrial: true)]
+        await access.refresh()
+        #expect(access.access == .inactive)
         #expect(center.pending.isEmpty)
         #expect(coordinator.forecast.isLocked)
         #expect(coordinator.forecast.outlook == nil)
         #expect(container.readAccessMirror()?.isActive == false)
         #expect(model.preferences?.notifications == settings)
 
-        _ = try await session.buyProduct(identifier: Plan.annual.productID)
-        #expect(await Self.eventually { store.access.isActive })
+        store.current = [SubscriptionFact(plan: .annual, state: .subscribed, isVerified: true)]
+        store.emit()
+        #expect(await Self.eventually { access.access.isActive })
         #expect(await Self.eventually { center.pending.count == 3 })
         #expect(!coordinator.forecast.isLocked)
         #expect(model.preferences?.notifications == settings)
         #expect(container.readAccessMirror()?.isActive == true)
+    }
+
+    @Test("A purchase that isn't available says so")
+    func purchaseUnavailable() async throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "Access-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        let access = AccessController(
+            store: LiveStore(), container: SharedContainer.resolve(groupIdentifier: "test") { _ in url })
+        await access.purchase(.annual)
+        #expect(access.message == "The App Store isn't reachable right now. Try again in a moment.")
     }
 }
 

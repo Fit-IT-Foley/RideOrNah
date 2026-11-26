@@ -75,6 +75,6 @@ struct RootView: View {
             .environment(forecast)
             .environment(NotificationCoordinator.live(app: model, forecast: forecast))
             .environment(
-                AccessController(container: .current(), stub: .active(plan: .annual, inTrial: true, renews: true)))
+                AccessController(store: StubStore(active: true), container: .current()))
     }
 #endif

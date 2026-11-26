@@ -3,7 +3,6 @@ import Foundation
 import Observation
 import Presentation
 import SharedContainer
-import StoreKit
 
 /// The one place the app talks to StoreKit: loads the plans, works out access from the
 /// device's verified transactions, and follows purchases, renewals, refunds and revocations
@@ -24,95 +23,65 @@ final class AccessController {
     /// Called after access changes, so weather and notifications can follow.
     var onChange: ((Access) async -> Void)?
 
-    /// Asks the App Store for the account's transactions. It can show a sign-in prompt, so
-    /// tests replace it.
-    var sync: () async throws -> Void = { try await AppStore.sync() }
-
+    let store: any StoreServing
     private let container: SharedContainer
-    private let stub: Access?
-    private var products: [Plan: Product] = [:]
     private var updates: Task<Void, Never>?
 
-    init(container: SharedContainer, stub: Access? = nil) {
+    init(store: any StoreServing, container: SharedContainer) {
+        self.store = store
         self.container = container
-        self.stub = stub
     }
 
     /// The live controller, or, in debug builds, `-accessStub active|inactive` for UI tests.
     static func live() -> AccessController {
         #if DEBUG
             if let stub = UserDefaults.standard.string(forKey: "accessStub") {
-                return AccessController(
-                    container: .current(),
-                    stub: stub == "active" ? .active(plan: .annual, inTrial: true, renews: true) : .inactive)
+                return AccessController(store: StubStore(active: stub == "active"), container: .current())
             }
         #endif
-        return AccessController(container: .current())
+        return AccessController(store: LiveStore(), container: .current())
     }
 
     /// Starts following transactions and makes the first check. Call once at launch.
     func start() async {
-        if let stub {
-            offers = Self.stubOffers
-            await set(stub)
-            return
-        }
         guard updates == nil else { return }
+        let stream = store.updates()
         updates = Task { [weak self] in
-            for await update in Transaction.updates {
-                if case .verified(let transaction) = update { await transaction.finish() }
-                await self?.refresh()
-            }
+            for await _ in stream { await self?.refresh() }
         }
-        await loadProducts()
+        offers = await store.loadOffers()
         await refresh()
     }
 
     /// Whether access was active at the last check, from the access mirror, so launch doesn't
     /// fetch weather for a lapsed rider or lock a subscriber before StoreKit answers.
-    var lastKnownActive: Bool { stub?.isActive ?? container.readAccessMirror()?.isActive ?? false }
+    var lastKnownActive: Bool { store.knownActive ?? container.readAccessMirror()?.isActive ?? false }
 
     /// Loads the plans again, after they failed to load.
     func retry() async {
-        await loadProducts()
+        offers = await store.loadOffers()
         await refresh()
     }
 
-    /// Re-reads the subscription group's status from StoreKit.
+    /// Re-reads the subscription group's status.
     func refresh() async {
-        guard stub == nil else { return }
-        var facts: [SubscriptionFact] = []
-        if let product = products.values.first, let statuses = try? await product.subscription?.status {
-            facts = statuses.compactMap(Self.fact)
-        }
+        let facts = await store.facts()
         endsAt = AccessPolicy.ends(from: facts)
         await set(AccessPolicy.access(from: facts))
     }
 
     func purchase(_ plan: Plan) async {
         message = nil
-        if stub != nil {
-            await set(.active(plan: plan, inTrial: true, renews: true))
-            return
-        }
-        guard let product = products[plan] else {
-            message = "The App Store isn't reachable right now. Try again in a moment."
-            return
-        }
         isPurchasing = true
         defer { isPurchasing = false }
         do {
-            switch try await product.purchase() {
-            case .success(let verification):
-                if case .verified(let transaction) = verification { await transaction.finish() }
-                await refresh()
-            case .pending:
-                message = "Your purchase is waiting for approval."
-            case .userCancelled:
-                break
-            @unknown default:
-                break
+            switch try await store.purchase(plan) {
+            case .purchased: await refresh()
+            case .pending: message = "Your purchase is waiting for approval."
+            case .cancelled: break
             }
+        } catch StoreError.unavailable {
+            message = "The App Store isn't reachable right now. Try again in a moment."
         } catch {
             message = "The purchase didn't go through. Nothing was charged."
         }
@@ -120,10 +89,8 @@ final class AccessController {
 
     func restore() async {
         message = nil
-        guard stub == nil else { return }
-        if products.isEmpty { await loadProducts() }
         do {
-            try await sync()
+            try await store.sync()
         } catch {
             message = "Couldn't reach the App Store to restore. Try again in a moment."
         }
@@ -139,77 +106,4 @@ final class AccessController {
         if new.isActive { showsPaywall = false }
         if changed { await onChange?(new) }
     }
-
-    private func loadProducts() async {
-        guard let loaded = try? await Product.products(for: Plan.allCases.map(\.productID)) else { return }
-        var offers: [PlanOffer] = []
-        for product in loaded {
-            guard let plan = Plan(productID: product.id) else { continue }
-            products[plan] = product
-            var trial: PlanOffer.Trial?
-            if let subscription = product.subscription, await subscription.isEligibleForIntroOffer,
-                let intro = subscription.introductoryOffer, intro.paymentMode == .freeTrial
-            {
-                trial = PlanOffer.Trial(value: intro.period.value, unit: Self.unit(intro.period.unit))
-            }
-            offers.append(
-                PlanOffer(
-                    plan: plan, displayPrice: product.displayPrice, price: product.price,
-                    priceFormat: product.priceFormatStyle, trial: trial))
-        }
-        self.offers = offers
-    }
-
-    static func fact(_ status: Product.SubscriptionInfo.Status) -> SubscriptionFact? {
-        let transaction: Transaction
-        let isVerified: Bool
-        switch status.transaction {
-        case .verified(let value):
-            transaction = value
-            isVerified = true
-        case .unverified(let value, _):
-            transaction = value
-            isVerified = false
-        }
-        guard let plan = Plan(productID: transaction.productID) else { return nil }
-        let state: SubscriptionFact.State =
-            if transaction.revocationDate != nil {
-                .revoked
-            } else {
-                switch status.state {
-                case .subscribed: .subscribed
-                case .inGracePeriod: .inGracePeriod
-                case .inBillingRetryPeriod: .inBillingRetry
-                case .revoked: .revoked
-                default: .expired
-                }
-            }
-        let renews = (try? status.renewalInfo.payloadValue.willAutoRenew) ?? false
-        return SubscriptionFact(
-            plan: plan, state: state, isVerified: isVerified, isTrial: transaction.offer?.paymentMode == .freeTrial,
-            willRenew: renews, expiresAt: transaction.expirationDate)
-    }
-
-    static func unit(_ unit: Product.SubscriptionPeriod.Unit) -> PlanOffer.Trial.Unit {
-        switch unit {
-        case .day: .day
-        case .week: .week
-        case .month: .month
-        case .year: .year
-        @unknown default: .day
-        }
-    }
-
-    #if DEBUG
-        static let stubOffers = [
-            PlanOffer(
-                plan: .annual, displayPrice: "$29.99", price: 29.99, priceFormat: .currency(code: "USD"),
-                trial: .init(value: 1, unit: .week)),
-            PlanOffer(
-                plan: .monthly, displayPrice: "$4.99", price: 4.99, priceFormat: .currency(code: "USD"),
-                trial: .init(value: 1, unit: .week)),
-        ]
-    #else
-        static let stubOffers: [PlanOffer] = []
-    #endif
 }

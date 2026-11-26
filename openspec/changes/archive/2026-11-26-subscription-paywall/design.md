@@ -41,10 +41,11 @@ StoreKit keeps the latest verified status on the device, so the same facts are a
 
 ### `AccessController` in the app
 `AccessController` is `@Observable` and runs on the main actor.
-- **Reading access:** it loads the two products, reads `Product.SubscriptionInfo.status(for:)` for the group, maps each status to a `SubscriptionFact`, and publishes `access` and `offers`.
+- **The store interface:** it talks to the App Store through `StoreServing` (plans, facts, purchase, sync and an updates stream). `LiveStore` is StoreKit 2. `StubStore` stands in for UI tests and app-hosted tests.
+- **Reading access:** `LiveStore` loads the two products, reads the group's subscription status, and maps each status to a `SubscriptionFact`. The controller publishes `access` and `offers`.
 - **Live updates:** it listens to `Transaction.updates` from launch, finishes each transaction and re-reads status. Renewals, refunds, revocations and purchases on other devices therefore land without a relaunch.
-- **Actions:** `purchase(_:)`, `restore()`, the manage-subscriptions sheet and the offer-code sheet. `restore()` calls `AppStore.sync()` through a replaceable closure, because the real call can show an Apple Account sign-in prompt, even under StoreKit Testing.
-- **Debug override:** in debug builds `-accessStub active|inactive` replaces StoreKit with a fixed access value and stub offers, so UI tests never meet StoreKit. Existing UI tests pass `-accessStub active`.
+- **Actions:** `purchase(_:)`, `restore()` (`AppStore.sync()`, which can show an Apple Account sign-in prompt), the manage-subscriptions sheet and the offer-code sheet.
+- **Debug override:** in debug builds `-accessStub active|inactive` uses `StubStore`, so UI tests never meet StoreKit. Existing UI tests pass `-accessStub active`.
 
 ### What locks, and how
 - **Weather:** `ForecastController.refresh` makes no request without access, and Today and Week show a locked state instead of the verdict.
@@ -71,13 +72,12 @@ Settings gains a Subscription section: the current plan, Manage subscription (sy
 
 ### Products and local testing
 - **Products:** `rideornah.monthly` and `rideornah.annual` in one group, each with a 1-week free-trial introductory offer.
-- **Local testing:** `StoreKit/RideOrNah.storekit` holds them for testing. It sits outside the app's sources, so it never ships. It's set on the Run scheme, and app-hosted tests drive it with `SKTestSession` (purchase outside the app, refund, expire). Its prices are placeholders; App Store Connect sets the real ones.
+- **Local testing:** `StoreKit/RideOrNah.storekit` holds them for testing. It sits outside the app's sources, so it never ships. It's set on the Run scheme, and the `SKTestSession` suite drives `LiveStore` with it (purchase outside the app, refund, a lapsed trial). Its prices are placeholders; App Store Connect sets the real ones.
 - **Legal links:** Terms of Use points to Apple's standard licensed application end user license agreement. The Privacy Policy is `docs/privacy-policy.md`, served from the repository's GitHub Pages site. The URL lives in one `LegalLinks` constant.
 
 ## Risks / Trade-offs
 
-- [StoreKit Testing loads no products and refuses purchases (`.notEntitled`) on the iOS 26 simulator] → The `SKTestSession` tests run on iOS 27 and later, and CI runs them there. The access-gating tests don't use StoreKit and run on both. Trial eligibility isn't asserted, because StoreKit Testing reports riders as ineligible even when the purchase gets the trial. The package tests cover both wordings.
-- [`SKTestSession` on hosted CI simulators can be slow] → Each test only waits on its own transaction, using its own session and a fresh `clearTransactions()`.
+- [StoreKit Testing loads no products and refuses purchases (`.notEntitled`) in some simulators, including iOS 26 locally and CI's runners] → The scenario tests use `StubStore`, so they run everywhere. The `SKTestSession` suite drives `LiveStore` only where StoreKit Testing can load the plans. Trial eligibility isn't asserted, because StoreKit Testing reports riders as ineligible even when the purchase gets the trial. The package tests cover both wordings.
 - [App Review rejects a paywall missing a disclosure] → The disclosure text is tested, and `docs/manual-checks.md` gets a sandbox purchase check on a device before submission.
 - [The privacy policy URL isn't live until GitHub Pages is turned on] → The owner turns it on. Until then, the link is the one manual check left open.
 

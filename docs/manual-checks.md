@@ -21,9 +21,3 @@ Only list a scenario here when neither a Mac nor a simulator can check it: App S
 - **When:** before each App Store submission.
 - **How:** in App Store Connect → App Privacy, confirm the answers are "Data Not Collected" and that the app doesn't track. The privacy manifest's contents are tested by `RideOrNahTests/AppBundleTests.swift`.
 - **Why not a test:** the label lives in App Store Connect, not in the app.
-
-## app-platform: Color-independent state
-
-- **When:** until the first screen that shows state with color. `today-and-outlook`, with its verdict, will be the first.
-- **How:** nothing to check yet, because the placeholder screen shows no color-coded state. The change that adds the first one must add a UI test that reads the state's accessibility label, link it to this scenario, and delete this entry.
-- **Why not a test:** there's no color-coded state to test yet.

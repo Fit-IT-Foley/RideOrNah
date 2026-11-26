@@ -1,10 +1,11 @@
 import CoreGraphics
 import SwiftUI
 import Testing
+import WeatherData
 
 @testable import RideOrNah
 
-/// The app always uses its dark look. Rendering in each system color scheme shows the screen
+/// The app always uses its dark look. Rendering Today in each system color scheme shows the screen
 /// ignores the setting. Hosted CI simulators can't switch the device appearance, so this is the
 /// check that runs everywhere; the live switch is `AccessibilityTests.testSwitchingAppearanceKeepsTheDarkLook`.
 @MainActor
@@ -14,8 +15,14 @@ struct AppearanceTests {
     @Test("Light system setting")
     func rootViewStaysDarkInEitherSystemScheme() throws {
         let model = AppModel.preview()
-        let light = try backgroundBrightness(of: RootView().environment(model), in: .light)
-        let dark = try backgroundBrightness(of: RootView().environment(model), in: .dark)
+        let forecast = ForecastController(
+            app: model, source: .fixture(.clearDay), clock: { Date() },
+            cache: ForecastCache(directory: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)),
+            budget: nil)
+        let light = try backgroundBrightness(
+            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast), in: .light)
+        let dark = try backgroundBrightness(
+            of: TodayView(tab: .constant(.today)).environment(model).environment(forecast), in: .dark)
 
         #expect(light < 0.3, "the light system setting changed the background")
         #expect(dark < 0.3, "the dark background wasn't dark")

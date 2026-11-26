@@ -51,6 +51,12 @@ struct SettingsView: View {
                     } footer: {
                         Text("Profiles and places sync through your own iCloud. Nothing goes to us.")
                     }
+                    #if DEBUG
+                        Section("Developer") {
+                            NavigationLink("Weather pipeline") { WeatherDebugView() }
+                                .accessibilityIdentifier("settings.weatherDebug")
+                        }
+                    #endif
                 }
             }
             .scrollContentBackground(.hidden)

@@ -109,3 +109,24 @@ When the app stays open across local midnight, the Today screen SHALL switch to 
 #### Scenario: Midnight with the app open
 - **WHEN** the app is open on Today at 23:59 and the clock passes midnight
 - **THEN** Today shows the new day's verdict with the profile's default radius
+
+### Requirement: Current conditions
+The Today screen SHALL show the current hour's air temperature, feels-like temperature and precipitation chance at the evaluation location, in the rider's units. A value the forecast doesn't include SHALL be shown as unavailable.
+
+#### Scenario: Current hour values
+- **WHEN** units are imperial and the current hour is 54 °F (12.2 °C) air, 51 °F (10.6 °C) feels-like, with an 80% rain chance
+- **THEN** Today shows 54°, 51° and 80%
+
+### Requirement: Room to your limits
+When today's verdict is Ride, the Today screen SHALL show, for rain chance, gusts, cold and UV, the worst forecast value in today's evaluated hours at any sample point, next to the soft limit that would make it a Maybe.
+
+#### Scenario: Comfortable margins
+- **WHEN** today is Ride, the worst rain chance in the evaluated hours is 0%, and the soft rain-chance limit is 30%
+- **THEN** Today shows 0% for rain chance against "Maybe at 30%"
+
+### Requirement: Daylight
+The Today screen SHALL show today's sunrise and sunset at the evaluation location and the length of daylight between them. It SHALL leave this out when sun times are unavailable.
+
+#### Scenario: Sun times
+- **WHEN** sunrise is 6:38 AM and sunset is 4:46 PM
+- **THEN** Today shows both times and "10h 08m of light"

@@ -59,11 +59,11 @@ final class ReleaseBuildTests: XCTestCase {
             app.launch()
             // Release builds have no setup shortcut, so the app opens on setup or the root screen.
             let opened =
-                app.staticTexts["root.title"].waitForExistence(timeout: 10)
+                app.descendants(matching: .any)["today.screen"].waitForExistence(timeout: 10)
                 || app.descendants(matching: .any)["firstRun.screen"].exists
             XCTAssertTrue(opened)
             XCTAssertFalse(app.descendants(matching: .any)["weatherDebug.screen"].exists)
-            XCTAssertFalse(app.buttons["root.weatherDebug"].exists)
+            XCTAssertFalse(app.buttons["settings.weatherDebug"].exists)
             XCTAssertFalse(app.staticTexts["weatherDebug.requests"].exists)
         #endif
     }

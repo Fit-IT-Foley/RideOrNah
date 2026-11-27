@@ -8,18 +8,22 @@ import Testing
 
 @testable import RideOrNah
 
-/// Whether StoreKit Testing can load the plans in this simulator.
+/// Whether StoreKit Testing can load the plans and make a purchase in this simulator. Some load
+/// the plans but refuse purchases as `.notEntitled` (iOS 26 with the app's real team).
 func storeKitTestingWorks() async -> Bool {
-    guard (try? SKTestSession(configurationFileNamed: "RideOrNah")) != nil else { return false }
+    guard let session = try? SKTestSession(configurationFileNamed: "RideOrNah") else { return false }
     let products = try? await Product.products(for: Plan.allCases.map(\.productID))
-    return products?.count == Plan.allCases.count
+    guard products?.count == Plan.allCases.count else { return false }
+    session.disableDialogs = true
+    defer { session.clearTransactions() }
+    return (try? await session.buyProduct(identifier: Plan.monthly.productID)) != nil
 }
 
 /// The real StoreKit store against `StoreKit/RideOrNah.storekit` with StoreKit Testing: purchases
 /// outside the app, refunds and a lapsed trial, with no sandbox account. Serialized, since the
-/// test session is shared. StoreKit Testing loads no plans in some simulators (iOS 26 locally,
-/// and CI's runners), so the suite runs only where it can; `AccessControllerTests` cover the same
-/// scenarios with a stand-in store everywhere.
+/// test session is shared. StoreKit Testing can't load the plans or make purchases in some
+/// simulators (iOS 26 locally, and CI's runners), so the suite runs only where it can;
+/// `AccessControllerTests` cover the same scenarios with a stand-in store everywhere.
 @MainActor
 @Suite(
     .serialized,

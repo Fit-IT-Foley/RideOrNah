@@ -25,7 +25,7 @@ Every test that proves a scenario links to it with `// Scenario: app-release: <s
 - [x] 4.2 The owner creates the app record: "Ride or Nah", `com.rideornah.RideOrNah`, SKU `rideornah-ios`, English (U.S.) (needs Developer Program, owner only). Verify `make asc-apps` lists it.
 - [x] 4.3 Create the subscription group and both products with localizations, US prices equalized everywhere, availability in all territories, the one-week free trial in every territory, Family Sharing off, and the review screenshot (needs Developer Program). Verify the "Store products match PlanFetch" manual check with its read-only comparison.
 - [x] 4.4 Create the internal TestFlight group "Ride or Nah Team" with the owner in it (needs Developer Program). Verify `asc testflight groups list --app <id> --internal` shows it with the owner.
-- [ ] 4.5 Run `make testflight` from the owner's Mac (needs Developer Program). Verify the "Upload to TestFlight" manual check: build 1 of 1.0 is processed and in the internal group.
+- [x] 4.5 Run `make testflight` from the owner's Mac (needs Developer Program). Verify the "Upload to TestFlight" manual check: the build is processed and in the internal group, and the script ends with "is in TestFlight".
 
 ## 5. CI uploads
 
@@ -38,4 +38,4 @@ Every test that proves a scenario links to it with `// Scenario: app-release: <s
 
 ## 7. Integration
 
-- [ ] 7.1 Verify `make spec-coverage CHANGE=testflight-release` passes, and that `make test` and `make test-release` pass on all simulators with the real identity.
+- [x] 7.1 Verify `make spec-coverage CHANGE=testflight-release` passes, and that `make test` and `make test-release` pass on all simulators with the real identity.

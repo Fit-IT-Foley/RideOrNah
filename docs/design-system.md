@@ -45,6 +45,7 @@ Everything uses Dynamic Type text styles scaled from these sizes, so the largest
 ## Components
 
 - **Wordmark:** "RIDE *or* NAH", condensed caps with an italic serif "or" in accent.
+- **App icon:** option E on the canvas's "App icon — wordmark with gauge" board: the stacked wordmark inside tachometer ticks, orange on the Ride side, blue on the Nah side, with a white needle on Ride. `make app-icon` redraws it from `scripts/render-app-icon.swift` into both apps' asset catalogs.
 - **Chips:** profile, location and radius, as 36 pt capsules on dark glass with a chevron. Glass is Liquid Glass through `adaptiveSurface`.
 - **Verdict pill:** see above, 26 pt tall.
 - **Severity tag:** "HARD" is filled `nah`, "SOFT" is a white outline.

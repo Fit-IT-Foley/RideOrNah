@@ -137,10 +137,10 @@ final class LiveStore: StoreServing {
     final class StubStore: StoreServing {
         static let offers = [
             PlanOffer(
-                plan: .annual, displayPrice: "$29.99", price: 29.99, priceFormat: .currency(code: "USD"),
+                plan: .annual, displayPrice: "$19.99", price: 19.99, priceFormat: .currency(code: "USD"),
                 trial: .init(value: 1, unit: .week)),
             PlanOffer(
-                plan: .monthly, displayPrice: "$4.99", price: 4.99, priceFormat: .currency(code: "USD"),
+                plan: .monthly, displayPrice: "$2.99", price: 2.99, priceFormat: .currency(code: "USD"),
                 trial: .init(value: 1, unit: .week)),
         ]
 

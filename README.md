@@ -33,7 +33,8 @@ open RideOrNah.xcodeproj
 | `make format` | Rewrite Swift files to match `.swift-format` |
 | `make validate-specs` | Run `openspec validate --all --strict` (uses `npx` if `openspec` isn't installed) |
 | `make spec-coverage` | Fail if a spec scenario has no linked test or manual check. `CHANGE=<name>` also requires that change's scenarios |
-| `make asc-status`, `make asc-apps`, `make asc-bundle-ids` | Read-only App Store Connect checks through `asc` (see [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
+| `make testflight` | Archive a Release build, upload it with the next build number and give it to the internal TestFlight group (see "TestFlight" in [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
+| `make asc-status`, `make asc-apps`, `make asc-bundle-ids`, `make asc-subscriptions` | Read-only App Store Connect checks through `asc` (see [`docs/app-store-connect.md`](docs/app-store-connect.md)) |
 
 To run the UI tests on one simulator, look it up by device name and iOS version (a major like `26` picks the newest installed 26.x):
 
@@ -71,7 +72,7 @@ Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments
 | `-watchPreview YES` | Shows the watch app's screen on the iPhone, with the results this iPhone would send |
 | `-watchSample YES` (watch app) | Gives the watch app sample results received at 05:50 that call today Nah for rain from 5 PM, in place of a paired iPhone |
 
-**Trying the morning notification.** Background refresh only runs on a device or in a simulator when iOS chooses to, so to see one arrive, set the time a minute or two ahead in the Alerts tab and lock the simulator. To force the background refresh while paused in the debugger, run `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.example.rideornah.refresh"]`, using the app's bundle ID.
+**Trying the morning notification.** Background refresh only runs on a device or in a simulator when iOS chooses to, so to see one arrive, set the time a minute or two ahead in the Alerts tab and lock the simulator. To force the background refresh while paused in the debugger, run `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.rideornah.RideOrNah.refresh"]`, using the app's bundle ID.
 
 **WeatherKit setup (needs the Developer Program).** Live forecasts need the WeatherKit capability on the app's App ID (Certificates, Identifiers & Profiles → Identifiers → the app → WeatherKit), and the `com.apple.developer.weatherkit` entitlement, which `project.yml` already sets. A newly enabled capability can take about 30 minutes to start working. Until then, requests fail as "not authorized", and the app reports that rather than guessing.
 
@@ -134,13 +135,13 @@ git config core.hooksPath .githooks
 
 ## Signing and your Apple Developer account
 
-Simulator builds work without an account. For device builds, WeatherKit and StoreKit sandbox testing, copy the example config and fill in your values:
+The app's identity is in `Config/Base.xcconfig`: bundle ID `com.rideornah.RideOrNah`, team `WTF332KZJ6`, version and build number. Every target derives its bundle ID from it (`.Widgets`, `.watchkitapp`, `.watchkitapp.Widgets`), and the app group is `group.com.rideornah.RideOrNah`. Simulator builds work without an account. Device builds sign automatically with an Apple Account on that team signed in to Xcode.
+
+To build under another team, such as from a fork, copy the example config and fill in your own bundle ID and team. It's gitignored:
 
 ```sh
 cp Config/Local.xcconfig.example Config/Local.xcconfig
 ```
-
-`Config/Local.xcconfig` sets `BUNDLE_ID_PREFIX` and `DEVELOPMENT_TEAM`. It's gitignored, so personal identifiers stay out of the repository. The app group is derived from the prefix as `group.<prefix>.rideornah`.
 
 App Store Connect is driven from the command line with an API key, not a browser sign-in. See [`docs/app-store-connect.md`](docs/app-store-connect.md) for setup, key handling and the `make asc-*` commands.
 

@@ -21,6 +21,7 @@ final class PaywallTests: XCTestCase {
 
     // Scenario: subscription: After setup
     // Scenario: subscription: Required disclosures
+    // Scenario: app-release: Local prices
     @MainActor
     func testPaywallFollowsSetup() throws {
         let app = try launch(["-resetPreferences", "YES"])
@@ -40,7 +41,8 @@ final class PaywallTests: XCTestCase {
         let terms = app.descendants(matching: .any)["paywall.terms"]
         let privacy = app.descendants(matching: .any)["paywall.privacy"]
         for _ in 0..<4 where !privacy.exists { app.swipeUp() }
-        XCTAssertTrue(disclosure.label.hasPrefix("Free for 1 week, then $29.99 a year. Renews automatically"))
+        XCTAssertTrue(disclosure.label.hasPrefix("Free for 1 week, then $19.99 a year. Renews automatically"))
+        XCTAssertTrue(app.buttons["paywall.plan.monthly"].label.contains("$2.99 a month"))
         XCTAssertTrue(app.buttons["paywall.restore"].exists)
         XCTAssertTrue(terms.exists)
         XCTAssertTrue(privacy.exists)

@@ -1,9 +1,15 @@
 // Build settings shared by every RideOrNah target.
-// Personal values (bundle ID prefix, team) go in Local.xcconfig, which is gitignored.
+// Local.xcconfig (gitignored) can override them, for example to build under another team.
 
-BUNDLE_ID_PREFIX = com.example
-DEVELOPMENT_TEAM =
-APP_GROUP_IDENTIFIER = group.$(BUNDLE_ID_PREFIX).rideornah
+// The app's identity. Every target's bundle ID is APP_BUNDLE_ID plus a suffix (project.yml).
+APP_BUNDLE_ID = com.rideornah.RideOrNah
+DEVELOPMENT_TEAM = WTF332KZJ6
+APP_GROUP_IDENTIFIER = group.$(APP_BUNDLE_ID)
+
+// The version riders see, and the build number. `make testflight` sets the build number for
+// each upload from App Store Connect.
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
 
 IPHONEOS_DEPLOYMENT_TARGET = 26.0
 SWIFT_VERSION = 6.0

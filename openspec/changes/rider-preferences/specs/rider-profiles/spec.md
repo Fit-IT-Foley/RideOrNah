@@ -72,18 +72,26 @@ Each profile SHALL hold zero or more ride windows. Each window has a set of week
 - **THEN** the profile has no windows, and each day is evaluated from sunrise to sunset
 
 ### Requirement: Units
-The system SHALL display temperatures, speeds, distances, visibility and precipitation in the unit system of the device region by default. The rider SHALL be able to override it with imperial or metric. Changing units SHALL change only how values are displayed and entered, never the stored limits.
+The system SHALL display temperatures, speeds, distances, visibility and precipitation in the unit system of the device region by default. The rider SHALL be able to override it with imperial or metric. Changing units SHALL change only how values are displayed and entered, never the stored limits. Displayed limits SHALL be rounded to the unit's precision: whole degrees Fahrenheit, whole miles or kilometres per hour, whole percentages and UV, tenths of a degree Celsius and of a kilometre, hundredths of a mile, and tenths of a millimetre or thousandths of an inch per hour. That way a 4.4 °C limit reads 40 °F, not 39.9 °F.
 
 #### Scenario: Override to metric
 - **WHEN** a rider in the US switches units to metric
 - **THEN** a 30 mph gust limit is shown as 48 km/h, and verdicts are unchanged
 
+#### Scenario: Rounded display
+- **WHEN** units are imperial and the profile has the default limits
+- **THEN** the cold limits read 50 °F and 40 °F, and the heat limits read 90 °F and 100 °F
+
 ### Requirement: First-run setup
-On first launch, the system SHALL guide the rider through: choosing a riding-style preset; optionally reviewing the main limits (precipitation chance, cold, heat, wind and gusts), with an option to keep the defaults; and setting up a location (see `ride-locations`). Later capabilities MAY add steps after the location step (`ride-notifications` adds one). Completing setup SHALL create an active profile named "My Bike", which the rider can rename. Quitting mid-setup SHALL resume setup at the same step on next launch.
+On first launch, the system SHALL guide the rider through: choosing a riding-style preset; optionally reviewing the main limits (precipitation chance, cold, heat, wind and gusts), where the rider can change them, turn any of these factors off, or keep the defaults; and setting up a location (see `ride-locations`). Later capabilities MAY add steps after the location step (`ride-notifications` adds one). Completing setup SHALL create an active profile named "My Bike", which the rider can rename. Quitting mid-setup SHALL resume setup at the same step on next launch. Turning rain off during setup SHALL turn off the whole precipitation factor, chance and intensity alike.
 
 #### Scenario: Quick setup
 - **WHEN** a new rider picks Commute and keeps the defaults
 - **THEN** an active profile "My Bike" exists with the Commute windows and the default limits
+
+#### Scenario: Turning factors off during setup
+- **WHEN** a new rider turns off rain and heat while reviewing limits, and finishes setup
+- **THEN** "My Bike" has precipitation and heat turned off, and its other limits are the defaults
 
 #### Scenario: Interrupted setup
 - **WHEN** the rider quits after choosing a preset but before finishing setup

@@ -41,6 +41,22 @@ public enum Quantity: Sendable {
         }
     }
 
+    /// Decimals shown in `units`, so stored SI limits read as round numbers: 4.4 °C as 40 °F.
+    public func fractionDigits(in units: UnitSystem) -> Int {
+        switch (self, units) {
+        case (.temperature, .metric), (.distance, .metric), (.precipitationRate, .metric): 1
+        case (.distance, .imperial): 2
+        case (.precipitationRate, .imperial): 3
+        default: 0
+        }
+    }
+
+    /// `display(_:in:)` rounded to `fractionDigits(in:)`.
+    public func roundedDisplay(_ si: Double, in units: UnitSystem) -> Double {
+        let scale = pow(10, Double(fractionDigits(in: units)))
+        return (display(si, in: units) * scale).rounded() / scale
+    }
+
     public func symbol(in units: UnitSystem) -> String {
         switch (self, units) {
         case (.temperature, .imperial): "°F"

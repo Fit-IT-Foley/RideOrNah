@@ -21,6 +21,26 @@ struct FirstRunTests {
         #expect(preferences.activeProfile.limits == .defaults)
     }
 
+    // Scenario: rider-profiles: Turning factors off during setup
+    @Test("Turning factors off during setup")
+    func turningFactorsOff() {
+        var flow = FirstRunFlow(now: SettingsFixtures.morning)
+        flow.choose(.commute)
+        var limits = Limits.defaults
+        limits.precipitation.isEnabled = false
+        limits.heat.isEnabled = false
+        flow.confirmLimits(limits)
+        flow.locationPermission(granted: true)
+        flow.skipNotifications()
+        let kept = flow.finish(now: SettingsFixtures.morning).activeProfile.limits
+        #expect(!kept.precipitation.isEnabled)
+        #expect(!kept.heat.isEnabled)
+        var rest = kept
+        rest.precipitation.isEnabled = true
+        rest.heat.isEnabled = true
+        #expect(rest == .defaults)
+    }
+
     // Scenario: rider-profiles: Interrupted setup
     @Test("Interrupted setup")
     func interruptedSetup() {

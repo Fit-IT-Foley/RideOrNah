@@ -37,6 +37,38 @@ final class SetupTests: XCTestCase {
         XCTAssertEqual(profile.label, "Profile: My Bike. Change profile")
     }
 
+    // Scenario: rider-profiles: Turning factors off during setup
+    @MainActor
+    func testTurningFactorsOffDuringSetup() throws {
+        let app = try launch(["-resetPreferences", "YES", "-locationStub", "granted"])
+        XCTAssertTrue(app.descendants(matching: .any)["firstRun.screen"].waitForExistence(timeout: 10))
+        app.buttons["firstRun.style.commute"].tap()
+        let rain = app.switches["Rain chance on"]
+        XCTAssertTrue(rain.waitForExistence(timeout: 15))
+        rain.switches.firstMatch.tap()
+        app.switches["Heat (feels like) on"].switches.firstMatch.tap()
+        XCTAssertFalse(app.textFields["limit.Rain chance.soft"].exists)
+        XCTAssertFalse(app.textFields["limit.Heat (feels like).soft"].exists)
+        XCTAssertTrue(app.textFields["limit.Cold.soft"].exists)
+        app.buttons["firstRun.limits.confirm"].tap()
+        app.buttons["firstRun.location.allow"].tap()
+        let skip = app.buttons["firstRun.notifications.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 15))
+        skip.tap()
+
+        let settings = app.buttons["root.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 15))
+        settings.tap()
+        app.buttons["settings.profile"].firstMatch.tap()
+        let rainInSettings = app.switches["Rain"]
+        XCTAssertTrue(rainInSettings.waitForExistence(timeout: 15))
+        XCTAssertEqual(rainInSettings.value as? String, "0")
+        let heat = app.switches["Heat (feels like) on"]
+        XCTAssertTrue(reveal(heat, in: app))
+        XCTAssertEqual(heat.value as? String, "0")
+        XCTAssertEqual(app.switches["Cold on"].value as? String, "1")
+    }
+
     // Scenario: rider-profiles: Soft beyond hard
     @MainActor
     func testInvalidLimitShowsWhyAndBlocksSaving() throws {

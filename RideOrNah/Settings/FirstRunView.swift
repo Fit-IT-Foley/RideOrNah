@@ -82,13 +82,20 @@ private struct LimitsStep: View {
         VStack(alignment: .leading, spacing: 16) {
             StepHeader(
                 title: "Your limits",
-                detail: "Soft limits make it a Maybe; hard limits make it a Nah. These defaults suit most riders.")
+                detail:
+                    "Soft limits make it a Maybe; hard limits make it a Nah. These defaults suit most riders. Switch off anything you don't mind riding in."
+            )
             Card {
-                LimitRow(title: "Rain chance", quantity: .percentage, limit: $limits.precipitation.chance, units: units)
-                LimitRow(title: "Cold", quantity: .temperature, limit: $limits.cold, units: units)
-                LimitRow(title: "Heat (feels like)", quantity: .temperature, limit: $limits.heat, units: units)
-                LimitRow(title: "Wind", quantity: .speed, limit: $limits.wind, units: units)
-                LimitRow(title: "Gusts", quantity: .speed, limit: $limits.gusts, units: units)
+                // Rain's switch is the whole rain factor, so turning it off ignores intensity too.
+                LimitRow(
+                    title: "Rain chance", quantity: .percentage, limit: $limits.precipitation.chance, units: units,
+                    showsToggle: true, isOn: $limits.precipitation.isEnabled)
+                LimitRow(title: "Cold", quantity: .temperature, limit: $limits.cold, units: units, showsToggle: true)
+                LimitRow(
+                    title: "Heat (feels like)", quantity: .temperature, limit: $limits.heat, units: units,
+                    showsToggle: true)
+                LimitRow(title: "Wind", quantity: .speed, limit: $limits.wind, units: units, showsToggle: true)
+                LimitRow(title: "Gusts", quantity: .speed, limit: $limits.gusts, units: units, showsToggle: true)
             }
             Button("Use these limits") { model.updateFirstRun { $0.confirmLimits(limits) } }
                 .buttonStyle(PrimaryButtonStyle())

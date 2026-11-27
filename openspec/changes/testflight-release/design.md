@@ -40,6 +40,11 @@ See proposal.md for why this change exists.
 - **Names:** the app's `CFBundleDisplayName` becomes "Ride or Nah", matching the widgets and watch app.
 - **Export compliance:** all four targets get `ITSAppUsesNonExemptEncryption: false`. The app only uses HTTPS through Apple's frameworks, which is exempt.
 
+### App icon: drawn on the canvas, rendered by a script
+- **Design:** the canvas board "App icon — wordmark with gauge", option E. The stacked RIDE / *or* / NAH wordmark sits inside tachometer ticks, orange on the Ride side and blue on the Nah side, with a white needle on Ride. The first upload showed it was missing: App Store Connect rejects a build without icons.
+- **Rendering:** `scripts/render-app-icon.swift` (`make app-icon`) draws the board's geometry with Core Graphics at 1024 × 1024. It uses the same system fonts the app's `Wordmark` uses: heavy condensed for RIDE and NAH, semibold italic serif for "or". It writes an opaque PNG into `RideOrNah/Assets.xcassets` and `Watch/App/Assets.xcassets` as a single-size `AppIcon`. iOS rounds the corners and watchOS crops to a circle, and everything in the design sits inside that circle.
+- **Why a script:** exporting from the canvas would need its Google Fonts installed and would produce a screenshot. The script makes the icon reproducible, and it matches the in-app wordmark.
+
 ### Signing: Xcode automatic signing, cloud-managed distribution
 - **Archive:** `xcodebuild archive` and `-exportArchive` run with `-allowProvisioningUpdates`.
 - **What automatic signing creates on the first archive:**

@@ -50,7 +50,7 @@ WATCH_TEST_DESTINATION := $(WATCH_DESTINATION)
 endif
 
 .PHONY: help project simulators build test test-ios test-watch test-release test-kit audit lint format \
-	validate-specs spec-coverage testflight
+	validate-specs spec-coverage testflight app-icon
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
@@ -69,6 +69,7 @@ help:
 	@echo "make spec-coverage   Fail if a spec scenario has no linked test or manual check"
 	@echo "                     (CHANGE=<name> also requires that change's scenarios)"
 	@echo "make testflight  Archive a Release build and upload it to TestFlight"
+	@echo "make app-icon    Redraw the app icon into the iPhone and watch asset catalogs"
 
 project:
 	@command -v xcodegen >/dev/null 2>&1 || { \
@@ -122,6 +123,10 @@ validate-specs:
 # can reach are listed in docs/manual-checks.md. Run with CHANGE=<name> before archiving it.
 spec-coverage:
 	@scripts/check-spec-coverage.sh $(if $(CHANGE),--change $(CHANGE))
+
+# Draws the app icon (the design canvas's option E) into both apps' asset catalogs.
+app-icon:
+	swift scripts/render-app-icon.swift .
 
 # Archives a Release build, uploads it with the next build number, waits for processing and gives
 # it to the internal TestFlight group. Setup and the CI workflow: docs/app-store-connect.md

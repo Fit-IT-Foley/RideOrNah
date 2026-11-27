@@ -17,6 +17,13 @@ The iPhone app SHALL use the bundle ID `com.rideornah.RideOrNah`. Its widget ext
 - **WHEN** the app is installed
 - **THEN** its Home Screen label reads "Ride or Nah"
 
+### Requirement: App icons
+The iPhone app and the watch app SHALL each include the app icon chosen on the design canvas, in every size the App Store requires.
+
+#### Scenario: App icons
+- **WHEN** the app is built
+- **THEN** the iPhone app and the watch app each name their app icon and carry it in their bundle
+
 ### Requirement: Versions and build numbers
 The app, widget extension, watch app and complications SHALL carry the same version and the same build number. Each build uploaded to App Store Connect SHALL have a build number higher than every earlier upload of that version, so no upload is rejected as a duplicate.
 

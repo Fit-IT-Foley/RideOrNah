@@ -14,6 +14,7 @@ All ten v1 changes are built and pass on simulators, but nobody can install Ride
   - The app record, created by the owner, because Apple only allows that on the website or through a signed-in web session.
   - Two subscriptions in one group, matching PlanFetch's pricing: `rideornah.annual` at $19.99 a year and `rideornah.monthly` at $2.99 a month. Both have a one-week free trial, Family Sharing is off, and they're sold in every territory.
   - An internal TestFlight group for the owner.
+- **App icon:** the iPhone and Watch apps get the icon chosen on the design canvas, "E · Tachometer". The App Store rejects any build without one.
 - **Local mirrors:** the local StoreKit configuration and the UI tests' stand-in store use the same prices, so screenshots and tests look like the real thing. The app still reads real prices from the App Store at runtime.
 - **Builds:**
   - Version 1.0, with each upload's build number taken from App Store Connect, so uploads never collide.
@@ -38,6 +39,7 @@ All ten v1 changes are built and pass on simulators, but nobody can install Ride
   - `Config/Base.xcconfig` gets the real bundle ID, team, version and build number.
   - `project.yml` derives every target's bundle ID, app group, version and build number from them.
   - The Info.plists gain `ITSAppUsesNonExemptEncryption`.
+- **App icon:** asset catalogs for the app and the watch app, and `scripts/render-app-icon.swift` with `make app-icon`, which draws the icon.
 - **Release tooling:** a new `make testflight` target and `scripts/testflight.sh`, a new `.github/workflows/testflight.yml`, and updates to `docs/app-store-connect.md` and the README.
 - **Tests:** `RideOrNahTests/AppBundleTests.swift` gains identity and compliance checks. Price assertions move to $19.99 and $2.99.
 - **App Store Connect and the Developer portal:**

@@ -38,6 +38,22 @@ struct AppBundleTests {
         #expect(watch["WKCompanionAppBundleIdentifier"] as? String == "com.rideornah.RideOrNah")
     }
 
+    // App Store Connect rejects a build whose app or watch app has no icon.
+    // Scenario: app-release: App icons
+    @Test("App icons")
+    func appAndWatchCarryTheirIcons() throws {
+        let bundles = try Self.bundles()
+        for suffix in ["", ".watchkitapp"] {
+            let icons = try #require(bundles[suffix]?["CFBundleIcons"] as? [String: Any])
+            let primary = try #require(icons["CFBundlePrimaryIcon"] as? [String: Any])
+            #expect(primary["CFBundleIconName"] as? String == "AppIcon")
+        }
+        let app = Bundle.main.bundleURL
+        for url in [app, app.appending(path: "Watch/RideOrNahWatch.app")] {
+            #expect(FileManager.default.fileExists(atPath: url.appending(path: "Assets.car").path))
+        }
+    }
+
     // Scenario: app-release: Home Screen name
     @Test("Home Screen name")
     func homeScreenLabel() {

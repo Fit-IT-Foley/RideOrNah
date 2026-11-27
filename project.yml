@@ -68,6 +68,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   # Home Screen and Lock Screen widgets, reading the app's cache, settings and access mirror.
   RideOrNahWidgets:
@@ -153,6 +154,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).watchkitapp
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   # Watch-face complications, reading the results the watch app stored.
   RideOrNahWatchWidgets:

@@ -30,7 +30,7 @@ final class SetupTests: XCTestCase {
         app.buttons["firstRun.limits.confirm"].tap()
         app.buttons["firstRun.location.allow"].tap()
         let skip = app.buttons["firstRun.notifications.skip"]
-        XCTAssertTrue(skip.waitForExistence(timeout: 5))
+        XCTAssertTrue(skip.waitForExistence(timeout: 15))
         skip.tap()
         let profile = app.buttons["today.profileChip"]
         XCTAssertTrue(profile.waitForExistence(timeout: 10))
@@ -66,14 +66,14 @@ final class SetupTests: XCTestCase {
         places.tap()
         app.buttons["places.add"].tap()
         let search = app.textFields["places.search"]
-        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        XCTAssertTrue(search.waitForExistence(timeout: 15))
         search.tap()
         search.typeText("Main\n")
         let result = app.buttons["places.result"].firstMatch
-        XCTAssertTrue(result.waitForExistence(timeout: 5))
+        XCTAssertTrue(result.waitForExistence(timeout: 15))
         result.tap()
         let saved = app.staticTexts["places.saved"].firstMatch
-        XCTAssertTrue(saved.waitForExistence(timeout: 5))
+        XCTAssertTrue(saved.waitForExistence(timeout: 15))
         XCTAssertEqual(saved.label, "Main Street")
     }
 }

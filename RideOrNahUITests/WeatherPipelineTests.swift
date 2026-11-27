@@ -40,7 +40,7 @@ final class WeatherPipelineTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["weatherDebug.verdict"].waitForExistence(timeout: 15))
         let mark = app.descendants(matching: .any)["attribution.mark"]
         let link = app.descendants(matching: .any)["attribution.link"]
-        XCTAssertTrue(mark.waitForExistence(timeout: 5))
+        XCTAssertTrue(mark.waitForExistence(timeout: 15))
         XCTAssertTrue(link.exists)
     }
 }

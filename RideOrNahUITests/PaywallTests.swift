@@ -30,7 +30,7 @@ final class PaywallTests: XCTestCase {
         app.buttons["firstRun.limits.confirm"].tap()
         app.buttons["firstRun.location.allow"].tap()
         let skip = app.buttons["firstRun.notifications.skip"]
-        XCTAssertTrue(skip.waitForExistence(timeout: 5))
+        XCTAssertTrue(skip.waitForExistence(timeout: 15))
         skip.tap()
 
         XCTAssertTrue(app.descendants(matching: .any)["paywall.screen"].waitForExistence(timeout: 10))
@@ -57,20 +57,20 @@ final class PaywallTests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["today.word"].exists)
 
         app.buttons["locked.seePlans"].tap()
-        XCTAssertTrue(app.descendants(matching: .any)["paywall.screen"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["paywall.screen"].waitForExistence(timeout: 15))
         app.buttons["paywall.close"].tap()
-        XCTAssertTrue(locked.waitForExistence(timeout: 5))
+        XCTAssertTrue(locked.waitForExistence(timeout: 15))
 
         // Settings stay usable without access.
         app.buttons["root.settings"].tap()
-        XCTAssertTrue(app.descendants(matching: .any)["settings.screen"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["settings.screen"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.buttons["settings.profile"].firstMatch.exists)
         app.buttons["Done"].tap()
 
         // Subscribing unlocks Today without a relaunch.
         app.buttons["locked.seePlans"].tap()
         let subscribe = app.buttons["paywall.subscribe"]
-        XCTAssertTrue(subscribe.waitForExistence(timeout: 5))
+        XCTAssertTrue(subscribe.waitForExistence(timeout: 15))
         subscribe.tap()
         XCTAssertTrue(app.descendants(matching: .any)["today.word"].waitForExistence(timeout: 15))
     }

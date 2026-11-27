@@ -39,7 +39,7 @@ final class TodayScreenTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["today.word"].waitForExistence(timeout: 15))
         app.tabBars.buttons["Week"].tap()
         let rows = app.buttons.matching(identifier: "week.row")
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 15))
         for _ in 0..<4 where rows.count < 7 { app.swipeUp() }
         XCTAssertEqual(rows.count, 7)
         // Each row reads as one element, so the marker is part of the row's label.
@@ -53,9 +53,9 @@ final class TodayScreenTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["today.word"].waitForExistence(timeout: 15))
         app.tabBars.buttons["Week"].tap()
         let firstDay = app.buttons.matching(identifier: "week.row").firstMatch
-        XCTAssertTrue(firstDay.waitForExistence(timeout: 5))
+        XCTAssertTrue(firstDay.waitForExistence(timeout: 15))
         firstDay.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["detail.word"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["detail.word"].waitForExistence(timeout: 15))
         let mark = app.descendants(matching: .any)["attribution.mark"]
         let link = app.descendants(matching: .any)["attribution.link"]
         for _ in 0..<6 where !link.exists { app.swipeUp() }

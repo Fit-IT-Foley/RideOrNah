@@ -11,13 +11,14 @@ set -euo pipefail
 
 # The checks every pull request must pass, by job name in .github/workflows/ci.yml. A check
 # that is missing, skipped, cancelled or still running blocks the merge. The UI test entries
-# match the default matrix that ci.yml's `plan` job builds for pull requests.
+# match the default matrix that ci.yml's `plan` job builds for pull requests, plus its watch job.
 EXPECTED_CHECKS=(
     "checks"
     "Spec validation"
     "plan"
     "UI tests (iPhone 17, iOS 26)"
     "UI tests (iPhone 17, iOS 27)"
+    "Watch UI tests (watchOS 26)"
 )
 
 WAIT_SECONDS=2700

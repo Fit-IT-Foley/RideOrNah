@@ -6,7 +6,7 @@ iOS app (iOS 26+) that tells motorcycle riders Ride, Maybe or Nah for today, fro
 
 - Xcode 27.1 or later
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
-- For `make test`: iOS 26.x and iOS 27.x simulator runtimes (Xcode → Settings → Components)
+- For `make test`: iOS 26.x, iOS 27.x and watchOS 27.x simulator runtimes (Xcode → Settings → Components, or `xcodebuild -downloadPlatform watchOS`)
 
 ## Getting started
 
@@ -23,8 +23,9 @@ open RideOrNah.xcodeproj
 |---|---|
 | `make project` | Generate the Xcode project from `project.yml` |
 | `make build` | Build the app for the iOS Simulator (`CONFIGURATION=Release` for a release build) |
-| `make simulators` | Create the `RideOrNah iOS 26` and `RideOrNah iOS 27` simulators if they're missing |
-| `make test` | Create those simulators if needed, then run the app-hosted unit tests and UI tests on both. `DESTINATION=...` runs them on one simulator instead |
+| `make simulators` | Create the `RideOrNah iOS 26`, `RideOrNah iOS 27` and `RideOrNah watchOS 27` simulators if they're missing |
+| `make test` | Create those simulators if needed, run the app-hosted unit tests and UI tests on both iPhones, then the watch app's UI tests on the watch. `DESTINATION=...` runs the iPhone tests on one simulator instead, without the watch |
+| `make test-ios`, `make test-watch` | Run only the iPhone tests, or only the watch app's (`WATCH_DESTINATION=...` picks another watch) |
 | `make test-release` | Run the Release-build UI check (debug-only code such as fixture weather must be absent) on the same simulators |
 | `make test-kit` | Run the `RideOrNahKit` package tests on this Mac (no simulator needed) |
 | `make audit` | Fail if any remote package dependency has been added |
@@ -38,9 +39,10 @@ To run the UI tests on one simulator, look it up by device name and iOS version 
 
 ```sh
 make test DESTINATION="$(scripts/find-simulator.sh 'iPhone 17' 26)"
+make test-watch WATCH_DESTINATION="$(scripts/find-simulator.sh 'Apple Watch Series 11 (46mm)' 26 watchOS)"
 ```
 
-Test results, including screenshots of the launch screen and the largest text size, go to `build/UITests.xcresult`.
+Test results, including screenshots of the launch screen and the largest text size, go to `build/UITests.xcresult`, and the watch's to `build/WatchUITests.xcresult`.
 
 ## Weather
 
@@ -64,6 +66,10 @@ Add them in Xcode under Product → Scheme → Edit Scheme → Run → Arguments
 | `-searchStub YES` | Returns canned place-search results instead of asking Apple Maps |
 | `-notificationStub granted` or `denied` | Answers the notification prompt without the system dialog, and schedules nothing with iOS |
 | `-accessStub active` or `inactive` | Skips StoreKit with a fixed subscription state and stand-in plans, for UI tests. Without it, debug runs use `StoreKit/RideOrNah.storekit` |
+| `-calendarStub save` or `cancel` | Answers the Add to Calendar editor without showing it, and writes nothing to the calendar |
+| `-fixedNow 2026-06-08T06:00` | Stops the clock at that local time, so fixture weather and the watch sample give the same answers every run |
+| `-watchPreview YES` | Shows the watch app's screen on the iPhone, with the results this iPhone would send |
+| `-watchSample YES` (watch app) | Gives the watch app sample results received at 05:50 that call today Nah for rain from 5 PM, in place of a paired iPhone |
 
 **Trying the morning notification.** Background refresh only runs on a device or in a simulator when iOS chooses to, so to see one arrive, set the time a minute or two ahead in the Alerts tab and lock the simulator. To force the background refresh while paused in the debugger, run `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"com.example.rideornah.refresh"]`, using the app's bundle ID.
 
@@ -98,7 +104,7 @@ A scenario that neither a Mac nor a simulator can check, such as App Store behav
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same make targets on GitHub-hosted runners:
 
 - Every push to `main` and every pull request: `make audit`, `make lint`, `make test-kit` and `make build` on macOS, and `make validate-specs` and `make spec-coverage` on Linux.
-- Every pull request: the app-hosted unit tests and UI tests on the newest iOS 26 and iOS 27 simulators. Test screenshots are uploaded as an artifact kept for 7 days.
+- Every pull request: the app-hosted unit tests and UI tests on the newest iOS 26 and iOS 27 simulators, and the watch app's UI tests on watchOS 26 (local `make test` covers watchOS 27). Test screenshots are uploaded as an artifact kept for 7 days.
 - On demand: the UI tests on any simulator the runners have.
 
 ```sh

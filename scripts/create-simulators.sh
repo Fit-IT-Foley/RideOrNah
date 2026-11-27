@@ -1,7 +1,8 @@
 #!/bin/sh
-# Creates the two simulators `make test` runs on, if they don't exist yet:
-# "RideOrNah iOS 26" (oldest supported OS) and
-# "RideOrNah iOS 27" (newest iOS that runs the device type).
+# Creates the simulators `make test` runs on, if they don't exist yet:
+# "RideOrNah iOS 26" (oldest supported OS),
+# "RideOrNah iOS 27" (newest iOS that runs the device type) and
+# "RideOrNah watchOS 27" (newest watchOS, for the watch app's UI tests).
 set -eu
 
 create() {
@@ -22,3 +23,4 @@ create() {
 
 create "RideOrNah iOS 26" "iPhone 17" '^iOS 26\.'
 create "RideOrNah iOS 27" "iPhone 17 Pro" '^iOS 27\.'
+create "RideOrNah watchOS 27" "Apple Watch Series 11 (46mm)" '^watchOS 27\.'

@@ -14,6 +14,7 @@ struct RideOrNahApp: App {
         let model = AppModel.live()
         let forecast = ForecastController.live(app: model)
         let notifications = NotificationCoordinator.live(app: model, forecast: forecast)
+        notifications.watch = WatchSender(session: LiveWatchSession())
         let access = AccessController.live()
         access.connect(forecast: forecast, notifications: notifications)
         Task { await access.start() }

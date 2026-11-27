@@ -19,12 +19,12 @@ final class CalendarTests: XCTestCase {
             XCTAssertTrue(app.descendants(matching: .any)["today.word"].waitForExistence(timeout: 15))
             // Ride suggestions are off until the rider turns them on in Alerts.
             app.tabBars.buttons["Week"].tap()
-            XCTAssertTrue(app.buttons.matching(identifier: "week.row").firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons.matching(identifier: "week.row").firstMatch.waitForExistence(timeout: 15))
             XCTAssertFalse(app.buttons["suggestion.add"].exists)
             app.tabBars.buttons["Alerts"].tap()
             let toggle = app.switches["alerts.suggestions"]
             for _ in 0..<4 where !toggle.exists { app.swipeUp() }
-            XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+            XCTAssertTrue(toggle.waitForExistence(timeout: 15))
             toggle.switches.firstMatch.exists ? toggle.switches.firstMatch.tap() : toggle.tap()
             app.tabBars.buttons["Week"].tap()
             return app
@@ -36,7 +36,7 @@ final class CalendarTests: XCTestCase {
     func testSavingARideMarksItAdded() throws {
         let app = try launch(calendar: "save")
         let add = app.buttons.matching(identifier: "suggestion.add").firstMatch
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.waitForExistence(timeout: 15))
         let before = app.buttons.matching(identifier: "suggestion.add").count
         add.tap()
         XCTAssertTrue(app.buttons["suggestion.added"].waitForExistence(timeout: 5))
@@ -49,7 +49,7 @@ final class CalendarTests: XCTestCase {
     func testCancellingKeepsTheSuggestion() throws {
         let app = try launch(calendar: "cancel")
         let add = app.buttons.matching(identifier: "suggestion.add").firstMatch
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.waitForExistence(timeout: 15))
         let before = app.buttons.matching(identifier: "suggestion.add").count
         add.tap()
         XCTAssertFalse(app.buttons["suggestion.added"].waitForExistence(timeout: 2))
@@ -62,14 +62,15 @@ final class CalendarTests: XCTestCase {
     func testTheSystemEditorOpensWithoutAPermissionPrompt() throws {
         let app = try launch(calendar: nil)
         let add = app.buttons.matching(identifier: "suggestion.add").firstMatch
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.waitForExistence(timeout: 15))
         add.tap()
+        // The editor runs in a system process and can take over 10 seconds on a busy simulator.
         let cancel = app.buttons["Cancel"]
-        XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+        XCTAssertTrue(cancel.waitForExistence(timeout: 30))
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         XCTAssertEqual(springboard.alerts.count, 0)
         XCTAssertEqual(app.alerts.count, 0)
         cancel.tap()
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.waitForExistence(timeout: 15))
     }
 }

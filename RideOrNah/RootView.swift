@@ -20,6 +20,8 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
         @State private var showsWeatherDebug = UserDefaults.standard.bool(forKey: "openWeatherDebug")
+        /// `-watchPreview YES` shows the watch app's screen with this iPhone's results.
+        @State private var showsWatchPreview = UserDefaults.standard.bool(forKey: "watchPreview")
     #endif
 
     var body: some View {
@@ -63,6 +65,7 @@ struct RootView: View {
         .onChange(of: model.preferences?.activeProfile) { _, _ in forecast.evaluate() }
         #if DEBUG
             .sheet(isPresented: $showsWeatherDebug) { WeatherDebugView() }
+            .sheet(isPresented: $showsWatchPreview) { WatchPreviewScreen() }
         #endif
     }
 

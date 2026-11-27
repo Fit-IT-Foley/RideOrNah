@@ -1,6 +1,7 @@
 # Builds and tests RideOrNah on GitHub-hosted runners with the same make targets as local
 # work. Pushes to main and pull requests run the checks and spec validation; pull requests and
-# manual runs run the UI tests. Job names are what scripts/merge-when-green.sh waits for, so
+# manual runs run the UI tests, and the watch app's UI tests unless a manual run names an iOS
+# version. Job names are what scripts/merge-when-green.sh waits for, so
 # rename a job there too. Start a manual run on a chosen simulator with:
 #   gh workflow run ci.yml -f device="iPhone 17 Pro" -f ios=27.2
 # Leave out -f ios to run the newest iOS 26 and iOS 27 simulators.
@@ -134,5 +135,53 @@ jobs:
         with:
           name: screenshots-${{ matrix.device }}-iOS-${{ matrix.ios }}
           path: build/screenshots
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The watch app's own UI tests, on the oldest supported watchOS. Local `make test` runs them on
+  # the newest.
+  watch-tests:
+    name: Watch UI tests (watchOS 26)
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.ios == '')
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select the newest Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9.]+\.app$' | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+      - name: Create the watch simulator
+        id: simulator
+        # A new watch on the newest watchOS 26, unpaired like the one `make simulators` creates.
+        run: |
+          runtime=$(xcrun simctl list runtimes available | awk '/^watchOS 26\./ { print $NF }' | sort -V | tail -1)
+          if [ -z "$runtime" ]; then
+            echo "error: no watchOS 26 simulator runtime on this runner" >&2
+            xcrun simctl list runtimes >&2
+            exit 1
+          fi
+          xcrun simctl create "RideOrNah watchOS 26" "Apple Watch Series 11 (46mm)" "$runtime"
+          destination=$(scripts/find-simulator.sh "RideOrNah watchOS 26" 26 watchOS)
+          echo "destination=$destination" >> "$GITHUB_OUTPUT"
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Run the watch UI tests
+        env:
+          WATCH_DESTINATION: ${{ steps.simulator.outputs.destination }}
+        run: make test-watch WATCH_DESTINATION="$WATCH_DESTINATION"
+      - name: Show test failures
+        if: failure()
+        run: |
+          [ -d build/WatchUITests.xcresult ] || exit 0
+          xcrun xcresulttool get test-results summary --path build/WatchUITests.xcresult \
+            | jq -r '.testFailures[]? | "\(.testName): \(.failureText)"'
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: watch-test-results
+          path: build/WatchUITests.xcresult
           retention-days: 7
           if-no-files-found: ignore

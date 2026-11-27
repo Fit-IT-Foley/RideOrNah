@@ -17,10 +17,12 @@ targets:
       Release: Config/Base.xcconfig
     sources:
       - path: RideOrNah
-      # The widget views, so app-hosted tests can render them.
+      # The widget and watch views, so app-hosted tests can render them.
       - path: Widgets/Views
+      - path: Watch/Shared
     dependencies:
       - target: RideOrNahWidgets
+      - target: RideOrNahWatch
       - package: RideOrNahKit
         product: SharedContainer
       - package: RideOrNahKit
@@ -104,6 +106,99 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.widgets
         TARGETED_DEVICE_FAMILY: "1"
 
+  # The Apple Watch app, fed by results the iPhone evaluates. It never fetches weather.
+  RideOrNahWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "26.0"
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: Watch/App
+      - path: Watch/Shared
+      - path: RideOrNah/DesignSystem
+      - path: RideOrNah/Weather/WeatherAttributionView.swift
+    dependencies:
+      - target: RideOrNahWatchWidgets
+      - package: RideOrNahKit
+        product: Presentation
+      - package: RideOrNahKit
+        product: VerdictEngine
+      - package: RideOrNahKit
+        product: WeatherData
+    entitlements:
+      path: Watch/App/RideOrNahWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
+    info:
+      path: Watch/App/Info.plist
+      properties:
+        CFBundleDisplayName: Ride or Nah
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: $(BUNDLE_ID_PREFIX).rideornah
+        RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+
+  # Watch-face complications, reading the results the watch app stored.
+  RideOrNahWatchWidgets:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "26.0"
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: Watch/Complications
+      - path: Watch/Shared
+      - path: RideOrNah/DesignSystem
+      - path: RideOrNah/Weather/WeatherAttributionView.swift
+    dependencies:
+      - package: RideOrNahKit
+        product: Presentation
+      - package: RideOrNahKit
+        product: VerdictEngine
+      - package: RideOrNahKit
+        product: WeatherData
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: Watch/Complications/RideOrNahWatchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
+    info:
+      path: Watch/Complications/Info.plist
+      properties:
+        CFBundleDisplayName: Ride or Nah
+        RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp.widgets
+
+  # UI tests of the watch app on a watch simulator, fed sample results instead of an iPhone.
+  RideOrNahWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "26.0"
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    sources:
+      - path: RideOrNahWatchUITests
+    dependencies:
+      - target: RideOrNahWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
   # Unit tests hosted in the app, for checks that need the built app bundle.
   RideOrNahTests:
     type: bundle.unit-test
@@ -152,6 +247,14 @@ schemes:
       targets:
         - RideOrNahTests
         - RideOrNahUITests
+  # The watch app's UI tests (`make test-watch`), on a watch simulator.
+  RideOrNahWatch:
+    build:
+      targets:
+        RideOrNahWatch: all
+    test:
+      targets:
+        - RideOrNahWatchUITests
   # Runs UI tests against a Release build (`make test-release`), to check debug-only code is gone.
   RideOrNahRelease:
     build:

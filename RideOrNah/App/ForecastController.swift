@@ -142,7 +142,7 @@ final class ForecastController {
 
     /// The outlook at the background location source (for notifications), with today's radius,
     /// from cache where possible. Nil when there's no background place.
-    func backgroundEvaluation() async -> (outlook: [DayEvaluation]?, fetchedAt: Date?)? {
+    func backgroundEvaluation() async -> (outlook: [DayEvaluation]?, fetchedAt: Date?, place: ResolvedLocation)? {
         guard !isLocked, let preferences = app.preferences,
             let place = preferences.backgroundPlace(lastSeen: app.store.lastSeenLocation)
         else { return nil }
@@ -157,7 +157,7 @@ final class ForecastController {
             profile: preferences.activeProfile.snapshot, now: now, calendar: calendar
         )
         .map(VerdictEngine.outlook(for:))
-        return (outlook, snapshot.fetchedAt)
+        return (outlook, snapshot.fetchedAt, place)
     }
 
     /// Locks or unlocks. Locking drops the forecast in hand, so no weather is shown.

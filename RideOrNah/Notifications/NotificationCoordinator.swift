@@ -17,6 +17,8 @@ final class NotificationCoordinator {
     private(set) var next: PlannedNotification?
     /// When access ends because the subscription won't renew; nothing is scheduled past it.
     var accessEnds: () -> Date? = { nil }
+    /// Gets the same evaluation, for the watch.
+    var watch: WatchSender?
 
     init(app: AppModel, forecast: ForecastController, center: any NotificationCentering) {
         self.app = app
@@ -58,9 +60,20 @@ final class NotificationCoordinator {
             // Without access, nothing stays scheduled; settings are kept for when it returns.
             next = nil
             await NotificationScheduler.replace(with: [], in: center)
+            if forecast.isLocked { watch?.send(.locked(at: forecast.clock())) }
             return
         }
         let evaluation = await forecast.backgroundEvaluation()
+        if let evaluation, let outlook = evaluation.outlook, let fetchedAt = evaluation.fetchedAt {
+            var results = WatchResults.make(
+                outlook: outlook, fetchedAt: fetchedAt, hasAccess: true, profile: preferences.activeProfile,
+                placeName: evaluation.place.name,
+                radius: preferences.radius(on: forecast.clock(), calendar: forecast.calendar),
+                formatter: forecast.formatter)
+            results.attributionMarkURL = forecast.attribution.darkMarkURL
+            results.attributionLegalURL = forecast.attribution.legalPageURL
+            watch?.send(results)
+        }
         let ends = accessEnds()
         let plan = NotificationPlanner(formatter: forecast.formatter).plan(
             settings: preferences.notifications, profile: preferences.activeProfile, outlook: evaluation?.outlook,

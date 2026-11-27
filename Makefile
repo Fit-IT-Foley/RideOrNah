@@ -50,7 +50,7 @@ WATCH_TEST_DESTINATION := $(WATCH_DESTINATION)
 endif
 
 .PHONY: help project simulators build test test-ios test-watch test-release test-kit audit lint format \
-	validate-specs spec-coverage
+	validate-specs spec-coverage testflight
 
 help:
 	@echo "make project     Generate $(PROJECT) from project.yml"
@@ -68,6 +68,7 @@ help:
 	@echo "make validate-specs  Run openspec validate --all --strict"
 	@echo "make spec-coverage   Fail if a spec scenario has no linked test or manual check"
 	@echo "                     (CHANGE=<name> also requires that change's scenarios)"
+	@echo "make testflight  Archive a Release build and upload it to TestFlight"
 
 project:
 	@command -v xcodegen >/dev/null 2>&1 || { \
@@ -122,12 +123,18 @@ validate-specs:
 spec-coverage:
 	@scripts/check-spec-coverage.sh $(if $(CHANGE),--change $(CHANGE))
 
+# Archives a Release build, uploads it with the next build number, waits for processing and gives
+# it to the internal TestFlight group. Setup and the CI workflow: docs/app-store-connect.md
+testflight: asc-check
+	@scripts/testflight.sh
+
 # App Store Connect, through the pinned `asc` CLI. Setup and key handling: docs/app-store-connect.md
 # Read-only: asc refuses any request that would change data, and sends no telemetry.
 #   make asc-status      Check the stored API key against Apple
 #   make asc-apps        List the team's apps
 #   make asc-bundle-ids  List the team's bundle IDs
-.PHONY: asc-check asc-status asc-apps asc-bundle-ids
+#   make asc-subscriptions  Ride or Nah's subscription prices next to PlanFetch's
+.PHONY: asc-check asc-status asc-apps asc-bundle-ids asc-subscriptions
 
 ASC := ASC_READ_ONLY=1 asc --no-telemetry
 
@@ -144,3 +151,11 @@ asc-apps: asc-check
 
 asc-bundle-ids: asc-check
 	@$(ASC) bundle-ids list --paginate --output table
+
+asc-subscriptions: asc-check
+	@for bundle in com.rideornah.RideOrNah com.aischeduler.AIScheduler; do \
+		app=$$($(ASC) apps list --bundle-id $$bundle --output json | jq -r '.data[0].id // empty'); \
+		echo "$$bundle"; \
+		if [ -n "$$app" ]; then $(ASC) subscriptions pricing summary --app $$app --output table; \
+		else echo "  no app record"; fi; \
+	done

@@ -101,11 +101,61 @@ asc --version
 
 Then update the version in this file. Homebrew installs only its current version of `asc`, so on a new Mac you may get a newer version than the one listed here. That's fine, but update this file to match.
 
-## CI (not set up yet)
+## TestFlight
 
-When CI needs App Store Connect, for TestFlight uploads, it will authenticate with the same kind of Team key through environment variables. `asc` reads `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_PRIVATE_KEY_B64`, a base64 copy of the `.p8`, which keeps the line breaks intact. Use a separate key for CI, named something like "RideOrNah CI", so you can revoke it without touching your own.
+Builds reach TestFlight only when the owner starts an upload, with `make testflight` on a Mac or the TestFlight workflow in CI. Both run `scripts/testflight.sh`, which:
 
-Set the secrets from this Mac. The owner runs these commands, never an agent:
+1. finds the app record by bundle ID,
+2. takes the next build number from App Store Connect,
+3. archives a Release build and exports it with Xcode's automatic signing and a cloud-managed Apple Distribution certificate,
+4. uploads it, waits for processing, and adds it to the internal group "Ride or Nah Team".
+
+### Identity
+
+Set in `Config/Base.xcconfig`. Every target derives its bundle ID from `APP_BUNDLE_ID`.
+
+| What | Value |
+|---|---|
+| App | `com.rideornah.RideOrNah` |
+| Widgets | `com.rideornah.RideOrNah.Widgets` |
+| Watch app | `com.rideornah.RideOrNah.watchkitapp` |
+| Watch complications | `com.rideornah.RideOrNah.watchkitapp.Widgets` |
+| App group | `group.com.rideornah.RideOrNah` |
+| Team | `WTF332KZJ6` |
+| App Store name, SKU | "Ride or Nah", `rideornah-ios` |
+
+### One-time setup
+
+1. **Register the IDs.** The first archive with `-allowProvisioningUpdates`, signed in to Xcode with an Apple Account on the team, registers the four App IDs, their App Groups and WeatherKit capabilities, and the app group. The App Store Connect API can't create app groups, so Xcode does this, not `asc`.
+2. **Create the app record (owner only).** Apple only allows this through a signed-in Apple Account. Either use the website (Apps → + → New App: iOS, "Ride or Nah", English (U.S.), the app's bundle ID, SKU `rideornah-ios`, Full Access), or run this in your own terminal, which signs in with your Apple Account and two-factor code:
+
+   ```sh
+   asc web apps create --name "Ride or Nah" --bundle-id com.rideornah.RideOrNah \
+     --sku rideornah-ios --primary-locale en-US --auto-rename=false
+   ```
+
+   `--auto-rename=false` stops it from quietly adding a suffix if the name is taken.
+3. **Subscriptions.** Create them as described under "Subscriptions" below.
+4. **Internal group.** Create "Ride or Nah Team" with the owner in it: `asc testflight groups create --app <APP_ID> --name "Ride or Nah Team" --internal`.
+
+### Upload from a Mac
+
+```sh
+make testflight
+```
+
+It needs Xcode signed in to an Apple Account on the team (Xcode → Settings → Apple Accounts), and the `asc` profile from "Set up a new Mac".
+
+### Upload from CI
+
+[`.github/workflows/testflight.yml`](../.github/workflows/testflight.yml) runs the same script. Nothing starts it automatically, so start it from `main`:
+
+```sh
+gh workflow run testflight.yml --ref main
+gh run watch
+```
+
+It authenticates with its own Team key, named something like "RideOrNah CI", so you can revoke it without touching yours. Set its three secrets from your Mac. The owner runs these commands, never an agent:
 
 ```sh
 gh secret set ASC_KEY_ID --body "<KEY_ID>"
@@ -113,40 +163,35 @@ gh secret set ASC_ISSUER_ID --body "<ISSUER_ID>"
 base64 -i ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 | gh secret set ASC_PRIVATE_KEY_B64
 ```
 
-The last command pipes the key straight into the secret, so it never shows up on screen or in your shell history. Then, in a workflow step:
+The last command pipes the key straight into the secret, so it never shows up on screen or in your shell history. The workflow decodes it to a temporary file readable only by the runner, passes the file's path to `xcodebuild` and `asc` (`ASC_PRIVATE_KEY_PATH`), and deletes it at the end. GitHub masks secret values in logs. Secrets aren't passed to workflows from forks, and only people with write access can start the workflow.
 
-```yaml
-env:
-  ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-  ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-  ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
-  ASC_TELEMETRY_DISABLED: "1"
-```
+**If CI signing fails.** CI signs with a cloud-managed distribution certificate through the API key. If the export step fails with a certificate permission error, Apple wants a key with more access for that. The choices are an Admin-role key used only by CI, or a regular Apple Distribution certificate stored as a secret.
 
-Secrets aren't passed to workflows triggered by pull requests from forks, so only branches in this repository can use them.
+### Build numbers and versions
 
-## Next: TestFlight
+Each upload takes the next build number from App Store Connect (`asc builds next-build-number`): one above the highest build it has seen for the app, uploaded or processed. So the Mac and CI never collide, and nothing is counted locally. The version riders see is `MARKETING_VERSION` in `Config/Base.xcconfig`. Raise it for each App Store release.
 
-The TestFlight upload pipeline gets its own OpenSpec change. It will need:
+### Export compliance
 
-1. **Real identifiers.** Choose the final bundle ID prefix. Register bundle IDs for the app, widget extension and watch app (`asc bundle-ids create`). Enable the WeatherKit and App Groups capabilities, and set up the app group.
-2. **The app record.** Create the app in App Store Connect with name, primary language, bundle ID and SKU. The API can't create app records, so this is a one-time step on the website, or `asc web apps create`.
-3. **Agreements.** Accept the Paid Applications agreement and fill in tax and banking details. This is needed for subscriptions, not for TestFlight itself.
-4. **Signing for CI.** Either cloud-managed signing (`xcodebuild -allowProvisioningUpdates` with the API key) or an Apple Distribution certificate and App Store profiles. Store them as secrets, or fetch them with `asc signing`.
-5. **Versioning.** Take build numbers from `asc builds next-build-number` so uploads never collide.
-6. **Export compliance.** Set `ITSAppUsesNonExemptEncryption` in the Info.plist so builds don't wait on the encryption question.
-7. **The workflow.** Add a manually started, or tag-triggered, GitHub Actions job: archive, export an `.ipa`, `asc builds upload`, `asc builds wait`, then add the build to an internal TestFlight group. Upload jobs take a lot of macOS minutes, so keep them off pull requests.
+Every bundle declares `ITSAppUsesNonExemptEncryption` false. The app's only encryption is HTTPS through Apple's frameworks, which is exempt, so builds don't wait on the encryption question.
 
 ## Subscriptions
 
-The app sells two auto-renewable plans in one subscription group. Their product IDs are fixed in code (`Plan` in `RideOrNahKit/Sources/Entitlements`):
+The app sells two auto-renewable plans in one subscription group, "Ride or Nah", with the same pricing as PlanFetch. Their product IDs are fixed in code (`Plan` in `RideOrNahKit/Sources/Entitlements`):
 
-| Product ID | Period | Introductory offer |
-|---|---|---|
-| `rideornah.annual` | 1 year | Free trial (1 week planned) |
-| `rideornah.monthly` | 1 month | Free trial (1 week planned) |
+| Product ID | Period | Level | US price | Introductory offer |
+|---|---|---|---|---|
+| `rideornah.annual` | 1 year | 1 | $19.99 | 1-week free trial |
+| `rideornah.monthly` | 1 month | 2 | $2.99 | 1-week free trial |
 
-- **Products.** Create them in App Store Connect under the app, with the same IDs, after the app record exists. Set prices, the trial length and Family Sharing there; the app reads them at runtime and never hard-codes them. `StoreKit/RideOrNah.storekit` mirrors them with placeholder prices ($29.99 and $4.99) for local testing only.
+- **Products.** Create them in App Store Connect under the app, with the same IDs, after the app record exists:
+  - Other territories use App Store Connect's equalized prices for the US prices.
+  - Both are available in every territory, including new ones, and the trial is offered in every territory.
+  - Family Sharing is off.
+  - Each has an English display name and description, and a paywall screenshot for review. Without those, they stay "Missing Metadata" and may not load in the sandbox.
+
+  The app reads prices and the trial at runtime and never hard-codes them. `StoreKit/RideOrNah.storekit` and the UI tests' stand-in store use the same prices, for local testing only.
+- **Compare with PlanFetch.** `make asc-subscriptions` prints both apps' subscription prices, read-only.
 - **Legal links.** The paywall links Terms of Use to Apple's standard licensed application end user license agreement, and the Privacy Policy to `docs/privacy-policy.md` on GitHub Pages (`LegalLinks` in `RideOrNah/Store/PaywallView.swift`). Use the same two URLs in the App Store listing. Before the first submission, the privacy policy URL must be live.
 - **Check on a device before each submission.** With a Sandbox Apple Account (Settings → Developer → Sandbox Apple Account on the iPhone), install a TestFlight or Xcode build. Then:
   1. Start the free trial from the paywall, and confirm Today unlocks.

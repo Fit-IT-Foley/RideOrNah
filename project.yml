@@ -44,7 +44,11 @@ targets:
     info:
       path: RideOrNah/Info.plist
       properties:
-        CFBundleDisplayName: RideOrNah
+        CFBundleDisplayName: Ride or Nah
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Only HTTPS through Apple's frameworks, which is exempt.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -61,7 +65,7 @@ targets:
               - rideornah
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
 
@@ -98,12 +102,15 @@ targets:
       path: Widgets/Info.plist
       properties:
         CFBundleDisplayName: Ride or Nah
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).Widgets
         TARGETED_DEVICE_FAMILY: "1"
 
   # The Apple Watch app, fed by results the iPhone evaluates. It never fetches weather.
@@ -136,12 +143,15 @@ targets:
       path: Watch/App/Info.plist
       properties:
         CFBundleDisplayName: Ride or Nah
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         WKApplication: true
-        WKCompanionAppBundleIdentifier: $(BUNDLE_ID_PREFIX).rideornah
+        WKCompanionAppBundleIdentifier: $(APP_BUNDLE_ID)
         RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).watchkitapp
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
 
   # Watch-face complications, reading the results the watch app stored.
@@ -175,12 +185,15 @@ targets:
       path: Watch/Complications/Info.plist
       properties:
         CFBundleDisplayName: Ride or Nah
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         RideOrNahAppGroup: $(APP_GROUP_IDENTIFIER)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).watchkitapp.Widgets
 
   # UI tests of the watch app on a watch simulator, fed sample results instead of an iPhone.
   RideOrNahWatchUITests:
@@ -196,7 +209,7 @@ targets:
       - target: RideOrNahWatch
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.watchkitapp.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).watchkitapp.UITests
         GENERATE_INFOPLIST_FILE: YES
 
   # Unit tests hosted in the app, for checks that need the built app bundle.
@@ -215,7 +228,7 @@ targets:
       - target: RideOrNah
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.tests
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).Tests
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
 
@@ -231,7 +244,7 @@ targets:
       - target: RideOrNah
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).rideornah.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).UITests
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
 

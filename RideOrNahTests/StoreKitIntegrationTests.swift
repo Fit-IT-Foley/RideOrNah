@@ -57,8 +57,8 @@ struct StoreKitIntegrationTests {
         await store.start()
         #expect(store.access == .inactive)
         #expect(Set(store.offers.map(\.plan)) == [.monthly, .annual])
-        #expect(store.offers.first { $0.plan == .annual }?.displayPrice == "$29.99")
-        #expect(store.offers.first { $0.plan == .monthly }?.displayPrice == "$4.99")
+        #expect(store.offers.first { $0.plan == .annual }?.displayPrice == "$19.99")
+        #expect(store.offers.first { $0.plan == .monthly }?.displayPrice == "$2.99")
     }
 
     @Test("Purchase on another device")

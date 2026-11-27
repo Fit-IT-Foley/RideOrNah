@@ -19,7 +19,7 @@ Every test that proves a scenario links to it with `// Scenario: app-release: <s
 
 ## 4. App Store Connect (needs Developer Program)
 
-- [ ] 4.1 Archive once with automatic signing, so Xcode registers the four App IDs with App Groups and WeatherKit, and the app group (needs Developer Program). Verify `make asc-bundle-ids` lists all four IDs.
+- [x] 4.1 Archive once with automatic signing, so Xcode registers the four App IDs with App Groups and WeatherKit, and the app group (needs Developer Program). Verify `make asc-bundle-ids` lists all four IDs.
 - [ ] 4.2 The owner creates the app record: "Ride or Nah", `com.rideornah.RideOrNah`, SKU `rideornah-ios`, English (U.S.) (needs Developer Program, owner only). Verify `make asc-apps` lists it.
 - [ ] 4.3 Create the subscription group and both products with localizations, US prices equalized everywhere, availability in all territories, the one-week free trial in every territory, Family Sharing off, and the review screenshot (needs Developer Program). Verify the "Store products match PlanFetch" manual check with its read-only comparison.
 - [ ] 4.4 Create the internal TestFlight group "Ride or Nah Team" with the owner in it (needs Developer Program). Verify `asc testflight groups list --app <id> --internal` shows it with the owner.

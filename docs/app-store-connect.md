@@ -108,7 +108,7 @@ Builds reach TestFlight only when the owner starts an upload, with `make testfli
 1. finds the app record by bundle ID,
 2. takes the next build number from App Store Connect,
 3. archives a Release build and exports it with Xcode's automatic signing and a cloud-managed Apple Distribution certificate,
-4. uploads it, waits for processing, and adds it to the internal group "Ride or Nah Team".
+4. uploads it and waits for processing. The internal group "Ride or Nah Team" has access to all builds, so App Store Connect gives it each build automatically. The script adds the build by hand only if that access is ever turned off.
 
 ### Identity
 
@@ -136,7 +136,7 @@ Set in `Config/Base.xcconfig`. Every target derives its bundle ID from `APP_BUND
 
    `--auto-rename=false` stops it from quietly adding a suffix if the name is taken.
 3. **Subscriptions.** Create them as described under "Subscriptions" below.
-4. **Internal group.** Create "Ride or Nah Team" with the owner in it: `asc testflight groups create --app <APP_ID> --name "Ride or Nah Team" --internal`.
+4. **Internal group.** Create "Ride or Nah Team" with the owner in it, with access to all builds: `asc testflight groups create --app <APP_ID> --name "Ride or Nah Team" --internal --access-all-builds --feedback-enabled`, then `asc testflight testers add --app <APP_ID> --email <owner's Apple Account> --group "Ride or Nah Team"`.
 
 ### Upload from a Mac
 

@@ -50,5 +50,17 @@ xcodebuild -exportArchive -quiet -archivePath "$OUT/RideOrNah.xcarchive" \
 
 echo "Uploading build $build and waiting for App Store Connect to process it"
 asc builds upload --app "$app" --ipa "$OUT/export/RideOrNah.ipa" --wait --output json >"$OUT/upload.json"
-asc builds add-groups --app "$app" --build-number "$build" --platform IOS --group "$GROUP" >/dev/null
+
+# An internal group with access to all builds gets each one automatically, and App Store Connect
+# refuses to add it by hand. Only a group without that access needs the build added.
+all_builds=$(asc testflight groups list --app "$app" --internal --output json |
+    jq -r --arg group "$GROUP" '.data[] | select(.attributes.name == $group) | .attributes.hasAccessToAllBuilds')
+case $all_builds in
+true) ;;
+false) asc builds add-groups --app "$app" --build-number "$build" --platform IOS --group "$GROUP" >/dev/null ;;
+*)
+    echo "error: the build uploaded, but the app has no internal TestFlight group \"$GROUP\"." >&2
+    exit 1
+    ;;
+esac
 echo "Ride or Nah $version ($build) is in TestFlight for \"$GROUP\"."

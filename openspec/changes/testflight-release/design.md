@@ -65,7 +65,7 @@ See proposal.md for why this change exists.
 2. **Number the build:** get the build number from `asc builds next-build-number` for the marketing version. That gives the "Next build number" scenario without counting anything locally.
 3. **Build:** run `make project`, then archive the `RideOrNah` scheme in Release for `generic/platform=iOS`, with that `CURRENT_PROJECT_VERSION`. The watch app and both extensions are embedded.
 4. **Export:** use `Config/ExportOptions.plist` (method `app-store-connect`, automatic signing, the team, symbol upload on).
-5. **Upload:** `asc builds upload`, then `asc builds wait` until processing finishes, then add the build to the internal group by name.
+5. **Upload:** `asc builds upload --wait`, which returns once processing finishes. The internal group has access to all builds, so App Store Connect gives it the build automatically, and it refuses a manual add for such a group. The script adds the build itself only if the group lacks that access.
 - **CI mode:** when `ASC_KEY_ID`, `ASC_ISSUER_ID` and a key file path are in the environment, the script adds the `xcodebuild` authentication flags. Otherwise it relies on Xcode's signed-in account and the `asc` keychain profile.
 - **Why upload with asc:** `asc` handles the upload and the TestFlight steps in both places. Letting `xcodebuild -exportArchive` upload with `destination: upload` would leave CI needing two different authentication paths.
 
@@ -88,7 +88,7 @@ See proposal.md for why this change exists.
   - A `FREE_TRIAL` intro offer of `ONE_WEEK` in every territory, imported like PlanFetch's.
   - Family Sharing off.
   - A paywall screenshot as the review screenshot, so both products reach Ready to Submit and load in the sandbox.
-- **TestFlight group:** an internal group, "Ride or Nah Team", containing the owner.
+- **TestFlight group:** an internal group, "Ride or Nah Team", with access to all builds and feedback on, containing the owner. That mirrors PlanFetch's internal "Me" group.
 
 ### Local mirrors of the prices
 - **What changes:** the prices in `StoreKit/RideOrNah.storekit` and `StubStore.offers`, plus the tests that read them.

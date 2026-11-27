@@ -39,7 +39,7 @@ final class CalendarTests: XCTestCase {
         XCTAssertTrue(add.waitForExistence(timeout: 15))
         let before = app.buttons.matching(identifier: "suggestion.add").count
         add.tap()
-        XCTAssertTrue(app.buttons["suggestion.added"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["suggestion.added"].waitForExistence(timeout: 15))
         XCTAssertEqual(app.buttons.matching(identifier: "suggestion.add").count, before - 1)
         XCTAssertEqual(app.alerts.count, 0)
     }

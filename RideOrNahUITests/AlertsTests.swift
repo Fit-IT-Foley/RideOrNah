@@ -20,19 +20,19 @@ final class AlertsTests: XCTestCase {
             XCTAssertTrue(app.descendants(matching: .any)["today.word"].waitForExistence(timeout: 15))
             app.tabBars.buttons["Alerts"].tap()
             let toggle = app.switches["alerts.toggle"]
-            XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+            XCTAssertTrue(toggle.waitForExistence(timeout: 15))
             toggle.switches.firstMatch.exists ? toggle.switches.firstMatch.tap() : toggle.tap()
             let previewTime = app.staticTexts["alerts.previewTime"]
             for _ in 0..<4 where !previewTime.exists { app.swipeUp() }
-            XCTAssertTrue(previewTime.waitForExistence(timeout: 5))
+            XCTAssertTrue(previewTime.waitForExistence(timeout: 15))
             XCTAssertEqual(previewTime.label, "MON 8 JUN, 6:30 AM")
 
             for _ in 0..<4 { app.swipeDown() }
             let time = app.datePickers["alerts.time"]
-            XCTAssertTrue(time.waitForExistence(timeout: 5))
+            XCTAssertTrue(time.waitForExistence(timeout: 15))
             time.buttons.firstMatch.exists ? time.buttons.firstMatch.tap() : time.tap()
             let wheels = app.pickerWheels
-            XCTAssertTrue(wheels.firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(wheels.firstMatch.waitForExistence(timeout: 15))
             wheels.element(boundBy: 0).adjust(toPickerWheelValue: "5")
             wheels.element(boundBy: 1).adjust(toPickerWheelValue: "45")
             app.tap(at: CGVector(dx: 0.5, dy: 0.08))

@@ -192,7 +192,11 @@ The app sells two auto-renewable plans in one subscription group, "Ride or Nah",
 
   The app reads prices and the trial at runtime and never hard-codes them. `StoreKit/RideOrNah.storekit` and the UI tests' stand-in store use the same prices, for local testing only.
 - **Compare with PlanFetch.** `make asc-subscriptions` prints both apps' subscription prices, read-only.
-- **Legal links.** The paywall links Terms of Use to Apple's standard licensed application end user license agreement, and the Privacy Policy to `docs/privacy-policy.md` on GitHub Pages (`LegalLinks` in `RideOrNah/Store/PaywallView.swift`). Use the same two URLs in the App Store listing. Before the first submission, the privacy policy URL must be live.
+- **Legal links.** The paywall (`LegalLinks` in `RideOrNah/Store/PaywallView.swift`) links:
+  - **Terms of Use** to Apple's standard licensed application end user license agreement.
+  - **Privacy Policy** to https://fit-it-foley.github.io/RideOrNah/privacy-policy.html. GitHub Pages serves it from the public [Fit-IT-Foley/fit-it-foley.github.io](https://github.com/Fit-IT-Foley/fit-it-foley.github.io) repository, so it stays up whatever this repository's visibility. The text is written in `docs/privacy-policy.md`. When it changes, update the page there too, along with its "Last updated" date.
+
+  The same privacy policy URL is set in the app's App Store Connect listing (App Information → Privacy Policy URL, English (U.S.)).
 - **Check on a device before each submission.** With a Sandbox Apple Account (Settings → Developer → Sandbox Apple Account on the iPhone), install a TestFlight or Xcode build. Then:
   1. Start the free trial from the paywall, and confirm Today unlocks.
   2. Cancel it in Settings → Subscriptions, and confirm the app shows "not renewing".

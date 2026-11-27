@@ -7,7 +7,7 @@ import SwiftUI
 enum LegalLinks {
     /// Apple's standard licensed application end user license agreement.
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    /// `docs/privacy-policy.md`, served by GitHub Pages.
+    /// `docs/privacy-policy.md`, served by GitHub Pages from the fit-it-foley.github.io repository.
     static let privacy = URL(string: "https://fit-it-foley.github.io/RideOrNah/privacy-policy.html")!
 }
 

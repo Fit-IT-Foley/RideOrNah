@@ -152,10 +152,18 @@ jobs:
           xcode=$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9.]+\.app$' | sort -V | tail -1)
           sudo xcode-select -s "$xcode"
           xcodebuild -version
-      - name: Find the simulator
+      - name: Create the watch simulator
         id: simulator
+        # A new watch on the newest watchOS 26, unpaired like the one `make simulators` creates.
         run: |
-          destination=$(scripts/find-simulator.sh "Apple Watch Series 11 (46mm)" 26 watchOS)
+          runtime=$(xcrun simctl list runtimes available | awk '/^watchOS 26\./ { print $NF }' | sort -V | tail -1)
+          if [ -z "$runtime" ]; then
+            echo "error: no watchOS 26 simulator runtime on this runner" >&2
+            xcrun simctl list runtimes >&2
+            exit 1
+          fi
+          xcrun simctl create "RideOrNah watchOS 26" "Apple Watch Series 11 (46mm)" "$runtime"
+          destination=$(scripts/find-simulator.sh "RideOrNah watchOS 26" 26 watchOS)
           echo "destination=$destination" >> "$GITHUB_OUTPUT"
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -163,3 +171,17 @@ jobs:
         env:
           WATCH_DESTINATION: ${{ steps.simulator.outputs.destination }}
         run: make test-watch WATCH_DESTINATION="$WATCH_DESTINATION"
+      - name: Show test failures
+        if: failure()
+        run: |
+          [ -d build/WatchUITests.xcresult ] || exit 0
+          xcrun xcresulttool get test-results summary --path build/WatchUITests.xcresult \
+            | jq -r '.testFailures[]? | "\(.testName): \(.failureText)"'
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: watch-test-results
+          path: build/WatchUITests.xcresult
+          retention-days: 7
+          if-no-files-found: ignore

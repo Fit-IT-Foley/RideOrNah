@@ -22,11 +22,15 @@ func storeKitTestingWorks() async -> Bool {
 /// The real StoreKit store against `StoreKit/RideOrNah.storekit` with StoreKit Testing: purchases
 /// outside the app, refunds and a lapsed trial, with no sandbox account. Serialized, since the
 /// test session is shared. StoreKit Testing can't load the plans or make purchases in some
-/// simulators (iOS 26 locally, and CI's runners), so the suite runs only where it can;
-/// `AccessControllerTests` cover the same scenarios with a stand-in store everywhere.
+/// simulators (iOS 26 locally), and on CI's runners its transactions don't reach the app
+/// reliably, so the suite runs only on a Mac where it works; `AccessControllerTests` cover the
+/// same scenarios with a stand-in store everywhere.
 @MainActor
 @Suite(
     .serialized,
+    .disabled(
+        if: ProcessInfo.processInfo.environment["CI"] == "true",
+        "StoreKit Testing transactions don't reach the app reliably on CI runners"),
     .enabled("StoreKit Testing loads the plans here") { await storeKitTestingWorks() })
 struct StoreKitIntegrationTests {
 

@@ -32,7 +32,7 @@
 - The store talks to a `KeyValueSyncing` protocol. Tests use an in-memory fake, and a test simulates a second device writing to it.
 
 ### Units
-`UnitSystem.resolved(override:locale:)` uses `Locale.measurementSystem`: US gives imperial, and everything else metric (UK riders get metric by default and can override). Display conversion is a pure function per factor (°C↔°F, m/s↔mph or km/h, m↔mi or km, mm/h↔in/h). Entering a value converts back to SI before validation.
+`UnitSystem.resolved(override:locale:)` uses `Locale.measurementSystem`: US gives imperial, and everything else metric (UK riders get metric by default and can override). Display conversion is a pure function per factor (°C↔°F, m/s↔mph or km/h, m↔mi or km, mm/h↔in/h). Entering a value converts back to SI before validation. `Quantity.fractionDigits(in:)` gives each unit's display precision, and `LimitRow` rounds to it. A stored 4.4 °C therefore reads 40 °F, not 39.9 °F, while the stored value stays exact.
 
 ### Validation
 `LimitValidator` returns a typed error with a rider-facing message:
@@ -57,7 +57,7 @@ Saved places are added by:
 - a pin dropped on a `Map` with `MapReader`.
 
 ### First-run flow as a state machine
-`FirstRunFlow` steps through preset → limits review → location explanation → (later changes add steps here) → done. Each answer updates a draft profile. Its `step` is persisted on every change, so quitting resumes at the same step. A denied permission routes to "add a saved location". Finishing creates the "My Bike" profile from the draft, and the flow's logic is unit-tested apart from the screens.
+`FirstRunFlow` steps through preset → limits review → location explanation → (later changes add steps here) → done. Each answer updates a draft profile. Its `step` is persisted on every change, so quitting resumes at the same step. A denied permission routes to "add a saved location". The limits step gives each factor the same on/off switch as the profile editor. Rain's switch is the precipitation factor's, so turning it off ignores chance and intensity together; TestFlight feedback asked for these switches. Finishing creates the "My Bike" profile from the draft, and the flow's logic is unit-tested apart from the screens.
 
 ### Screens
 - `FirstRunView` presents the flow's steps.

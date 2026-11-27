@@ -9,18 +9,21 @@ struct LimitRow: View {
     @Binding var limit: ThresholdLimit
     let units: UnitSystem
     var showsToggle = false
+    /// What the switch turns on and off when it's more than this limit, such as all of rain.
+    var isOn: Binding<Bool>?
 
     var body: some View {
+        let enabled = isOn ?? $limit.isEnabled
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title).font(.headline).foregroundStyle(Theme.ink)
                 Spacer()
                 if showsToggle {
-                    Toggle("", isOn: $limit.isEnabled).labelsHidden().tint(Theme.accent)
+                    Toggle("", isOn: enabled).labelsHidden().tint(Theme.accent)
                         .accessibilityLabel("\(title) on")
                 }
             }
-            if limit.isEnabled {
+            if enabled.wrappedValue {
                 HStack(spacing: 12) {
                     field("Soft", value: $limit.soft)
                     field("Hard", value: $limit.hard)
@@ -31,7 +34,7 @@ struct LimitRow: View {
 
     func field(_ label: String, value: Binding<Double?>) -> some View {
         let display = Binding<Double?>(
-            get: { value.wrappedValue.map { (quantity.display($0, in: units) * 10).rounded() / 10 } },
+            get: { value.wrappedValue.map { quantity.roundedDisplay($0, in: units) } },
             set: { value.wrappedValue = $0.map { quantity.si(fromDisplay: $0, in: units) } })
         return VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased()).font(.caption2.weight(.bold)).tracking(0.5).foregroundStyle(Theme.inkTertiary)

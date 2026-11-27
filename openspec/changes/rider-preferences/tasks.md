@@ -28,6 +28,8 @@ Every test that proves a scenario links to it with `// Scenario: <capability>: <
 - [x] 4.1 Add `Theme.swift` and the shared components from `docs/design-system.md`, and make the app always dark. Update the app-platform appearance tests to match. Verify a rendering test linked to "Light system setting" and the live UI test linked to "Switching appearance" pass (the background stays dark in both system modes, and the app keeps running).
 - [x] 4.2 Build `FirstRunView` on `FirstRunFlow`. Verify a UI test completes Quick setup on the `RideOrNah iOS 26` and `RideOrNah iOS 27` simulators and lands on the root screen with "My Bike" active.
 - [x] 4.3 Build `SettingsView`, `ProfileEditorView` (limits, windows, radius, durations) and `LocationsView` (search, current location, map pin, background source). Verify a UI test edits a limit and adds a saved place by search, and that validation messages appear for invalid input.
+- [x] 4.4 Give the first-run limits step an on/off switch for each factor it lists, with Rain's switch turning the precipitation factor off. Verify a `FirstRunFlow` test and a UI test linked to "Turning factors off during setup" pass. The UI test turns rain and heat off during setup and finds them off in the profile editor.
+- [x] 4.5 Add `Quantity.fractionDigits(in:)` and round `LimitRow`'s displayed values to it. Verify a test linked to "Rounded display" passes, and that every default limit displays at its unit's precision in both unit systems.
 
 ## 5. Integration
 

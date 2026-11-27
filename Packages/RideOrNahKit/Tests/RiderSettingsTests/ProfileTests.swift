@@ -163,6 +163,39 @@ struct ProfileTests {
         #expect(preferences.activeProfile.limits.gusts.soft == gust)
     }
 
+    // Scenario: rider-profiles: Rounded display
+    @Test("Rounded display")
+    func defaultsReadAsInTheTable() {
+        let limits = Limits.defaults
+        #expect(Quantity.temperature.roundedDisplay(limits.cold.soft!, in: .imperial) == 50)
+        #expect(Quantity.temperature.roundedDisplay(limits.cold.hard!, in: .imperial) == 40)
+        #expect(Quantity.temperature.roundedDisplay(limits.heat.soft!, in: .imperial) == 90)
+        #expect(Quantity.temperature.roundedDisplay(limits.heat.hard!, in: .imperial) == 100)
+    }
+
+    /// Every default limit at its unit's precision. The spec's table rounds 1 mm/h further, to 0.04 in/h.
+    @Test(arguments: [
+        (UnitSystem.imperial, [30.0, 60, 0.004, 0.039, 50, 40, 90, 100, 85, 20, 30, 30, 40, 8, 1, 0.25, 37]),
+        (UnitSystem.metric, [30.0, 60, 0.1, 1, 10, 4.4, 32, 37.8, 85, 32, 48, 48, 64, 8, 1.6, 0.4, 3]),
+    ])
+    func defaultsDisplayAsTheTable(units: UnitSystem, expected: [Double]) {
+        let limits = Limits.defaults
+        let shown: [(Quantity, Double?)] = [
+            (.percentage, limits.precipitation.chance.soft), (.percentage, limits.precipitation.chance.hard),
+            (.precipitationRate, limits.precipitation.intensity.soft),
+            (.precipitationRate, limits.precipitation.intensity.hard),
+            (.temperature, limits.cold.soft), (.temperature, limits.cold.hard),
+            (.temperature, limits.heat.soft), (.temperature, limits.heat.hard),
+            (.percentage, limits.humidity.soft),
+            (.speed, limits.wind.soft), (.speed, limits.wind.hard),
+            (.speed, limits.gusts.soft), (.speed, limits.gusts.hard),
+            (.index, limits.uv.soft),
+            (.distance, limits.visibility.soft), (.distance, limits.visibility.hard),
+            (.temperature, limits.ice.threshold),
+        ]
+        #expect(shown.map { quantity, si in si.map { quantity.roundedDisplay($0, in: units) } } == expected)
+    }
+
     @Test(arguments: [Quantity.temperature, .speed, .distance, .precipitationRate, .percentage, .index])
     func conversionsRoundTrip(quantity: Quantity) {
         for units in [UnitSystem.imperial, .metric] {

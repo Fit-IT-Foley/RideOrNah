@@ -8,7 +8,7 @@ The verdict is only as good as the limits and places behind it. A commuter on a 
 
 - Add rider profiles: several named profiles (for example one per bike), exactly one active, each with its own limits for every factor, ride windows, default ride radius, minimum ride duration and wet-road duration.
 - Give new profiles sensible default limits, and add riding-style presets for ride windows (Commute, Weekends, Anytime).
-- Add a first-run setup that creates the first profile in a few taps, with defaults the rider can accept as they are.
+- Add a first-run setup that creates the first profile in a few taps, with defaults the rider can accept as they are or turn off factor by factor.
 - Add evaluation locations: current location at approximate accuracy with When-In-Use permission only, plus up to 10 saved locations (Home, Work, custom).
 - Add ride radius presets (Local, 10 mi / 16 km, 25 mi / 40 km, 50 mi / 80 km, 100 mi / 160 km), each stored as one kilometer value, with a default per profile and a today-only override that resets at midnight.
 - Add a background location source for notifications and widgets: a chosen saved location, or the last location seen while the app was open.
